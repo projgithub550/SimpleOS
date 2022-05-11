@@ -6,7 +6,7 @@ using namespace std;
 
 // iNode初始化函数 
 void File::init_iNode(iNode* blankiNode) {
-	blankiNode->i_mode = 2;   //未定义文件类型
+	blankiNode->i_mode = 3;   //未定义文件类型
 	blankiNode->i_size = 0;
 	blankiNode->nlinks = 0;
 	blankiNode->open_num = 0;
@@ -19,7 +19,7 @@ void File::init_iNode(iNode* blankiNode) {
 // 完善新建文件的iNode信息
 iNode File::Fill_in_iNode(unsigned short f_type) {
 	iNode new_iNode;
-	new_iNode.i_mode = f_type; //0目录，1普通	
+	new_iNode.i_mode = f_type; //0目录，1 txt, 2 exe
 	if (f_type)
 		new_iNode.i_size = 0;//普通文件大小为0
 	else
@@ -37,12 +37,12 @@ iNode* File::Create_File(string filename, unsigned short f_type) {
 	dir* item;
 	int cur_i_no;
 	if (filename[0] != '/') {
-		if (!current_dir) {
+		if (!FileManager::current_dir) {
 			cout << "ERROR——当前目录发生错误" << endl;
 			return NULL;
 		}
-		item = current_dir;
-		cur_i_no = WorkingNo.top();
+		item = FileManager::current_dir;
+		cur_i_no = FileManager::WorkingNo.top();
 	}
 	else {	//文件名起始符为/，不合法
 		cout << "ERROR——文件名不合法" << endl;
@@ -68,7 +68,7 @@ iNode* File::Create_File(string filename, unsigned short f_type) {
 	unsigned int temp_no = 0;
 	int x;	//查找空的i节点
 	for (x = 0; x < iNode_NUM; x++)
-		if (iNode_table[x].nlinks == 0) {
+		if (FileManager::iNode_table[x].nlinks == 0) {
 			temp_no = x;
 			break;
 		}
@@ -85,27 +85,27 @@ iNode* File::Create_File(string filename, unsigned short f_type) {
 	if (f_type == 0) { //f_type为0时说明创建目录文件
 		dir temp_dir[DIR_FILE_NUM];
 		DIR::init_dir(temp_dir); //初始化dir
-		FILE* disk_p = fopen(DEV_NAME, "rb+");
+		FILE* disk_p = fopen(DISK, "rb+");
 		int blk_addr;
 		//当前情况下一个目录占四个block
 		dir* tmp_buf = temp_dir;
 		for (int k = 0; k < FBLK_NUM; k++) {
-			blk_addr = first_free();//每次从磁盘上找一个空间####磁盘部分
+			blk_addr = disk::first_free();//每次从磁盘上找一个空间####磁盘部分
 			newiNode.block_address[k] = blk_addr;
 			fseek(disk_p, blk_addr * BLOCK_SIZE, SEEK_SET);//在磁盘上写下相应信息
 			fwrite(((char*)tmp_buf + k * BLOCK_SIZE), BLOCK_SIZE, 1, disk_p);
 		}
 		fclose(disk_p);
 	}
-	iNode_table[(*(item + i)).iNode_no] = newiNode;
-	//在磁盘上写下相应信息，iNode_table更新，item所指的目录进行更新(利用cur_iNode)
-	FILE* disk_p = fopen(DEV_NAME, "rb+");
+	FileManager::iNode_table[(*(item + i)).iNode_no] = newiNode;
+	//在磁盘上写下相应信息，FileManager::iNode_table更新，item所指的目录进行更新(利用cur_iNode)
+	FILE* disk_p = fopen(DISK, "rb+");
 	fseek(disk_p, INODE_START * BLOCK_SIZE, SEEK_SET); //文件指针定位至inode_table处
-	fwrite(iNode_table, sizeof(iNode_table), 1, disk_p); //iNode_table更新
+	fwrite(FileManager::iNode_table, sizeof(FileManager::iNode_table), 1, disk_p); //iNode_table更新
 	//当前目录下的目录信息写回磁盘
 	char* buf = (char*)item;
 	for (int k = 0; k < FBLK_NUM; k++) {
-		fseek(disk_p, iNode_table[cur_i_no].block_address[k] * BLOCK_SIZE, SEEK_SET);
+		fseek(disk_p, FileManager::iNode_table[cur_i_no].block_address[k] * BLOCK_SIZE, SEEK_SET);
 		fwrite((buf + k * BLOCK_SIZE), BLOCK_SIZE, 1, disk_p);
 	}
 	fclose(disk_p);
@@ -116,7 +116,7 @@ iNode* File::Create_File(string filename, unsigned short f_type) {
 // 根据文件名定位到其iNode，修改open_num，创建文件句柄os_file 
 os_file* File::Open_File(string f_name) {
 	os_file* current_file = (os_file*)malloc(sizeof(os_file));
-	dir* current = current_dir;//当前所在目录的dir*数组
+	dir* current = FileManager::current_dir;//当前所在目录的dir*数组
 	if (!current) {
 		cout << "ERROR——当前路径出错" << endl;
 		return NULL;
@@ -126,7 +126,7 @@ os_file* File::Open_File(string f_name) {
 		cout << "ERROR——当前目录下找不到该文件" << endl;
 		return NULL;
 	}
-	current_file->f_iNode = iNode_table + x;
+	current_file->f_iNode = FileManager::iNode_table + x;
 	//判断是否已经打开
 	if (current_file->f_iNode->open_num == 1) {
 		cout << "ERROR——文件已经被打开" << endl;
@@ -134,15 +134,15 @@ os_file* File::Open_File(string f_name) {
 	}
 	current_file->f_pos = 0; //读指针置0
 	current_file->f_iNode->open_num = 1; //打开文件，置1 
-	WorkingDir.push(f_name);
-	WorkingNo.push(x);
+	FileManager::WorkingDir.push(f_name);
+	FileManager::WorkingNo.push(x);
 	return current_file;
 }
 
 // 关闭文件：修改open_num并释放句柄————Close_File(fp);
 void File::Close_File(os_file* f) {
-	WorkingDir.pop();
-	WorkingNo.pop();
+	FileManager::WorkingDir.pop();
+	FileManager::WorkingNo.pop();
 	f->f_iNode->open_num = 0;
 	f->f_pos = 0;
 	free(f);
@@ -155,7 +155,7 @@ int File::os_rm(string f_name) {
 		cout << "ERROR——不可删除该文件" << endl;
 		return 0;// 失败 
 	}
-	if (iNode_table[(*(current_dir + f_i)).iNode_no].i_mode == 0) {
+	if (FileManager::iNode_table[(*(FileManager::current_dir + f_i)).iNode_no].i_mode == 0) {
 		cout << "ERROR——该文件为目录文件" << endl;
 		return 0; //目录文件，错误
 	}

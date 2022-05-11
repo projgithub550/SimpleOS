@@ -26,10 +26,10 @@ unsigned int fileTOOLS::find_son_iNode(string son_name, dir* father) {
 	return (*(father + i)).iNode_no;
 }
 
-// 从dir* current_dir中查找到子文件在目录的位置（数组下标） 
+// 从dir* FileManager::current_dir中查找到子文件在目录的位置（数组下标） 
 int fileTOOLS::find_son_pos(string f_name) {
 	int i;
-	for (i = 0; i < DIR_FILE_NUM && (*(current_dir + i)).file_name != f_name; i++) {}
+	for (i = 0; i < DIR_FILE_NUM && (*(FileManager::current_dir + i)).file_name != f_name; i++) {}
 	if (i == DIR_FILE_NUM) { //目录中没有该文件
 		cout << "ERROR——当前目录没有找到该文件位置" << endl;
 		return DIR_FILE_NUM + 1;
@@ -64,14 +64,14 @@ dir* fileTOOLS::analyse_Path(string path) {
 	vector<string> dirs = split_dir(path);
 	dir* son_dir = (dir*)malloc(sizeof(dir) * DIR_FILE_NUM);
 	dir* father_dir = (dir*)malloc(sizeof(dir) * DIR_FILE_NUM);
-	int find_iNode = WorkingNo.top();
+	int find_iNode = FileManager::WorkingNo.top();
 	int i;
 	string son, father;
 	vector<string> working_dir;
 	vector<unsigned int> working_no;
 
 	if (path == "") {
-		get_dir(son_dir, &iNode_table[WorkingNo.top()]);	//返回当前目录的dir####磁盘部分
+		disk::get_dir(son_dir, &FileManager::iNode_table[FileManager::WorkingNo.top()]);	//返回当前目录的dir####磁盘部分
 		return son_dir;
 	}
 	else if (path[0] == '/') {// 绝对路径
@@ -79,13 +79,13 @@ dir* fileTOOLS::analyse_Path(string path) {
 			cout << "ERROR——错误的绝对路径" << endl;
 			return NULL;
 		}
-		father_dir = root_dir;
+		father_dir = FileManager::root_dir;
 		working_dir.push_back("root");
 		working_no.push_back(0);
 		i = 1;
 	}
 	else {//相对路径
-		father_dir = current_dir;
+		father_dir = FileManager::current_dir;
 		i = 0;
 	}
 	for (i; i < dirs.size(); i++) {
@@ -95,40 +95,40 @@ dir* fileTOOLS::analyse_Path(string path) {
 			cout << "ERROR——错误目录:" << son[i] << endl;
 			return NULL;
 		}
-		if (iNode_table[find_iNode].i_mode == 1) {
+		if (FileManager::iNode_table[find_iNode].i_mode == 1) {
 			cout << "ERROR——这不是一个目录" << endl;
 			return NULL;
 		}
 		//返回son文件的dir文件目录项数组son_dir####磁盘部分
-		get_dir(son_dir, &iNode_table[find_iNode]);
+		disk::get_dir(son_dir, &FileManager::iNode_table[find_iNode]);
 		father_dir = son_dir;
 		working_dir.push_back(son);
 		working_no.push_back(find_iNode);
 	}
-	current_dir = son_dir; //更新到表中
+	FileManager::current_dir = son_dir; //更新到表中
 	if (path[0] == '/') {//绝对路径
-		while (!WorkingDir.empty()) {
-			WorkingDir.pop();
-			WorkingNo.pop();
+		while (!FileManager::WorkingDir.empty()) {
+			FileManager::WorkingDir.pop();
+			FileManager::WorkingNo.pop();
 		}
 	}
 	for (int i = 0; i < dirs.size(); i++) {
-		WorkingDir.push(working_dir[i]);
-		WorkingNo.push(working_no[i]);
+		FileManager::WorkingDir.push(working_dir[i]);
+		FileManager::WorkingNo.push(working_no[i]);
 	}
-	return current_dir;
+	return FileManager::current_dir;
 }
 
 // 格式化一个iNode
 void fileTOOLS::format_iNode(iNode* oldiNode) {
-	oldiNode->i_mode = 2;
+	oldiNode->i_mode = 3;
 	oldiNode->i_size = 0;
 	oldiNode->nlinks = 0;
 	oldiNode->open_num = 0;
 	for (int i = 0; i < FBLK_NUM; i++) {
 		if (oldiNode->block_address[i] < MAX_BLOCK_NUM) {
 			//如果块被占用则释放块,修改bitmap
-			release_block(oldiNode->block_address[i]);//####磁盘部分
+			disk::release_block(oldiNode->block_address[i]);//####磁盘部分
 			oldiNode->block_address[i] = MAX_BLOCK_NUM + 1;
 		}
 		else
@@ -138,28 +138,28 @@ void fileTOOLS::format_iNode(iNode* oldiNode) {
 
 // 删除文件
 int fileTOOLS::Delete_File(int f_i) {
-	unsigned int crt_no = (*(current_dir + f_i)).iNode_no;
-	iNode crt_inode = iNode_table[crt_no];
+	unsigned int crt_no = (*(FileManager::current_dir + f_i)).iNode_no;
+	iNode crt_inode = FileManager::iNode_table[crt_no];
 	//格式化要删除的文件的iNode
-	format_iNode(iNode_table + (*(current_dir + f_i)).iNode_no);
+	format_iNode(FileManager::iNode_table + (*(FileManager::current_dir + f_i)).iNode_no);
 	//调整要删除的文件的所在目录（后面的文件前移）
 	int j;
-	for (j = f_i; j < DIR_FILE_NUM && (*(current_dir + j)).iNode_no != iNode_NUM + 1; j++) {
-		(*(current_dir + j)).file_name = (*(current_dir + j + 1)).file_name;
-		(*(current_dir + j)).iNode_no = (*(current_dir + j + 1)).iNode_no;
+	for (j = f_i; j < DIR_FILE_NUM && (*(FileManager::current_dir + j)).iNode_no != iNode_NUM + 1; j++) {
+		(*(FileManager::current_dir + j)).file_name = (*(FileManager::current_dir + j + 1)).file_name;
+		(*(FileManager::current_dir + j)).iNode_no = (*(FileManager::current_dir + j + 1)).iNode_no;
 	}
 	//buf保存当前目录的内容
 	char* buf = (char*)malloc(sizeof(dir) * DIR_FILE_NUM);
-	memcpy(buf, current_dir, sizeof(dir) * DIR_FILE_NUM);
+	memcpy(buf, FileManager::current_dir, sizeof(dir) * DIR_FILE_NUM);
 	//在磁盘上修改当前目录内容
-	FILE* disk_p = fopen(DEV_NAME, "rb+");
+	FILE* disk_p = fopen(DISK, "rb+");
 	for (int i = 0; i < FBLK_NUM; i++) {
 		fseek(disk_p, crt_inode.block_address[i] * BLOCK_SIZE, SEEK_SET);
 		fwrite((buf + i * BLOCK_SIZE), BLOCK_SIZE, 1, disk_p);
 	}
 	//在磁盘上修改iNode表的内容
 	fseek(disk_p, INODE_START * BLOCK_SIZE, SEEK_SET);
-	fwrite(iNode_table, sizeof(iNode_table), 1, disk_p);
+	fwrite(FileManager::iNode_table, sizeof(FileManager::iNode_table), 1, disk_p);
 
 	free(buf);
 	fclose(disk_p);

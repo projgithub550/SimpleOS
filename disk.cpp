@@ -5,7 +5,7 @@
 using namespace std;
 
 //ÊµÏÖ½¨Á¢Ä£Äâ´ÅÅÌÎÄ¼ş£¬ÉêÇëµÄ×ã¹»´óµÄÄÚ´æ²¢Ğ´ÈëÎÄ¼ş£¬·µ»Øtrue»òfalse±íÊ¾²Ù×÷³É¹¦Óë·ñ
-bool format_disk()
+bool disk::format_disk()
 {
 	FILE* diskp;//´ÅÅÌÎÄ¼şÖ¸Õë
 	char* buf = (char*)malloc(MAX_BLOCK_NUM * BLOCK_SIZE);//ÉêÇë×ã¹»µÄ´ÅÅÌ¿Õ¼ä
@@ -20,7 +20,7 @@ bool format_disk()
 
 }
 //´ÅÅÌ³õÊ¼»¯£¬ĞèÒªÒÀ´ÎÍê³É³¬¼¶¿éµÄ³õÊ¼»¯¡¢inodeµÄ³õÊ¼»¯¡¢Î»Í¼bitmapµÄ³õÊ¼»¯¡¢¸ùÄ¿Â¼root_dirµÄ³õÊ¼»¯£¬Íê³É¸÷Ïî³õÊ¼»¯ºóĞ´Èë´ÅÅÌ²¢±£´æ£¬·µ»Øtrue»òfalse±íÊ¾²Ù×÷³É¹¦Óë·ñ¡£
-bool init_disk()
+bool disk::init_disk()
 {
 	//³¬¼¶¿éµÄ³õÊ¼»¯
 	super_block* sb = (super_block*)malloc(sizeof(super_block));//ÏÈ¶¯Ì¬ÉêÇë×ã¹»µÄÄÚ´æ£¬Ğ´Èë¶ÔÓ¦Êı¾İºóÔÙĞ´Èë´ÅÅÌÎÄ¼ş£¬È»ºóÊÍ·Å
@@ -45,7 +45,7 @@ bool init_disk()
 	}
 
 	//root_dir¸ùÄ¿Â¼µÄ³õÊ¼»¯
-	dir root[MAX_FILE_NUM];
+	dir root[DIR_FILE_NUM];
 	DIR::init_dir(root);
 	iNode root_iNode = File::Fill_in_iNode(0);//¸ùÄ¿Â¼¶ÔÓ¦½Úµã
 	for (int i = 0; i < FBLK_NUM; i++)
@@ -56,50 +56,50 @@ bool init_disk()
 	*inode_table = root_iNode;//·ÅÈëinode±í
 
 	//Ğ´Èë´ÅÅÌ
-	FILE* disk = fopen(DISK, "rb+"); //¶ÁĞ´´ò¿ªÒ»¸ö¶ş½øÖÆÎÄ¼ş£¬Ö»ÔÊĞí¶ÁĞ´Êı¾İ
-	fwrite(sb, sizeof(super_block), 1, disk); //Ğ´Èë³¬¼¶¿éÄÚÈİ
-	fseek(disk, INODE_START * BLOCK_SIZE, SEEK_SET);//¶¨Î»µ½Á÷ÖĞÖ¸¶¨µÄÎ»ÖÃ,SEEK_SET 0 ÎÄ¼ş¿ªÍ·
-	fwrite(inode_table, sizeof(iNode) * iNode_NUM, 1, disk); //Ğ´Èëinode_table
-	fseek(disk, BITMAP_START * BLOCK_SIZE, SEEK_SET);//¶¨Î»µ½bitmapµÄÎ»ÖÃ
-	fwrite(bitmap, MAX_BLOCK_NUM, 1, disk); //Ğ´Èëbitmap
+	FILE* diskp = fopen(DISK, "rb+"); //¶ÁĞ´´ò¿ªÒ»¸ö¶ş½øÖÆÎÄ¼ş£¬Ö»ÔÊĞí¶ÁĞ´Êı¾İ
+	fwrite(sb, sizeof(super_block), 1, diskp); //Ğ´Èë³¬¼¶¿éÄÚÈİ
+	fseek(diskp, INODE_START * BLOCK_SIZE, SEEK_SET);//¶¨Î»µ½Á÷ÖĞÖ¸¶¨µÄÎ»ÖÃ,SEEK_SET 0 ÎÄ¼ş¿ªÍ·
+	fwrite(inode_table, sizeof(iNode) * iNode_NUM, 1, diskp); //Ğ´Èëinode_table
+	fseek(diskp, BITMAP_START * BLOCK_SIZE, SEEK_SET);//¶¨Î»µ½bitmapµÄÎ»ÖÃ
+	fwrite(bitmap, MAX_BLOCK_NUM, 1, diskp); //Ğ´Èëbitmap
 	for (int i = 0; i < FBLK_NUM; i++) //root_dirĞ´Èë´ÅÅÌ
 	{
-		fseek(disk, root_iNode.block_address[i] * BLOCK_SIZE, SEEK_SET);//¶¨Î»µ½root_dirµÄÎ»ÖÃ
-		fwrite((char*)root + i * BLOCK_SIZE, BLOCK_SIZE, 1, disk);
+		fseek(diskp, root_iNode.block_address[i] * BLOCK_SIZE, SEEK_SET);//¶¨Î»µ½root_dirµÄÎ»ÖÃ
+		fwrite((char*)root + i * BLOCK_SIZE, BLOCK_SIZE, 1, diskp);
 	}
 	free(sb);
 	free(inode_table);
 	free(bitmap);
-	fclose(disk);
+	fclose(diskp);
 	return true;
 }
 
 //ÊµÏÖ´ÅÅÌ¸ñÊ½»¯ºÍ³õÊ¼»¯ºó£¬¶ÁÈëÏµÍ³ËùĞèµÄ¸÷¸ö²ÎÊı£¬¶ÁÈëiNode_table£¬root_dir£¬·µ»Øtrue»òfalse±íÊ¾²Ù×÷³É¹¦Óë·ñ¡£
-bool start_disk()
+bool disk::start_disk()
 {
-	dir* temp_root = root_dir;//ÁÙÊ±¸ùÄ¿Â¼
+	dir* temp_root = FileManager::root_dir;//ÁÙÊ±¸ùÄ¿Â¼
 	while (1)
 	{
 		FILE* diskp = fopen(DISK, "rb");
-		if(debug){
+		if (debug) {//	µ÷ÊÔ×¨ÓÃ
 			format_disk();
 			init_disk();
 		}
 		if (diskp)
 		{
 			fseek(diskp, INODE_START * BLOCK_SIZE, SEEK_SET);//¶¨Î»µ½inode±íÎ»ÖÃ
-			fread(&iNode_table, iNode_NUM * sizeof(iNode), 1, diskp);//¶ÁÈëÈ«¾Ö±äÁ¿iNode_tableÖĞ
+			fread(&FileManager::iNode_table, iNode_NUM * sizeof(iNode), 1, diskp);//¶ÁÈëÈ«¾Ö±äÁ¿iNode_tableÖĞ
 			for (int i = 0; i < FBLK_NUM; i++) //¶ÁÈëroot_dir¸ùÄ¿Â¼
 			{
-				fseek(diskp, iNode_table[0].block_address[i] * BLOCK_SIZE, SEEK_SET);
+				fseek(diskp, FileManager::iNode_table[0].block_address[i] * BLOCK_SIZE, SEEK_SET);
 				fread((char*)temp_root + i * BLOCK_SIZE, BLOCK_SIZE, 1, diskp);
 			}
-			current_dir = root_dir;
+			FileManager::current_dir = temp_root;
 			int j = 0;
 			for (int j = 0; j < iNode_NUM; j++)
 			{
-				if (iNode_table[j].i_mode != 2)
-					iNode_table[j].open_num = 0;
+				if (FileManager::iNode_table[j].i_mode != 2)
+					FileManager::iNode_table[j].open_num = 0;
 			}
 			fclose(diskp);
 			return true;
@@ -112,7 +112,7 @@ bool start_disk()
 	}
 }
 
-int first_free()//²éÕÒµÚÒ»¸ö¿ÕÏĞ¿éºÅ£¬ĞŞ¸ÄÆäbitmapÎª1±íÊ¾±»Õ¼ÓÃ£¬½«´ÅÅÌÖĞµÄÎ»Í¼¶Á³ö£¬²éÕÒ¿ÕÏĞ¿éºÅ£¬ĞŞ¸ÄĞÅÏ¢ºóĞ´Ğ´»Ø´ÅÅÌ£¬·µ»Ø¸Ã¿éºÅ¡£
+int disk::first_free()//²éÕÒµÚÒ»¸ö¿ÕÏĞ¿éºÅ£¬ĞŞ¸ÄÆäbitmapÎª1±íÊ¾±»Õ¼ÓÃ£¬½«´ÅÅÌÖĞµÄÎ»Í¼¶Á³ö£¬²éÕÒ¿ÕÏĞ¿éºÅ£¬ĞŞ¸ÄĞÅÏ¢ºóĞ´Ğ´»Ø´ÅÅÌ£¬·µ»Ø¸Ã¿éºÅ¡£
 {
 	char* bitmap = (char*)malloc(MAX_BLOCK_NUM);//ÁÙÊ±´æ·ÅÎ»Í¼
 	FILE* diskp = fopen(DISK, "rb+");//¶ÁĞ´´ò¿ªÒ»¸ö¶ş½øÖÆÎÄ¼ş£¬Ö»ÔÊĞí¶ÁĞ´Êı¾İ¡£
@@ -135,7 +135,7 @@ int first_free()//²éÕÒµÚÒ»¸ö¿ÕÏĞ¿éºÅ£¬ĞŞ¸ÄÆäbitmapÎª1±íÊ¾±»Õ¼ÓÃ£¬½«´ÅÅÌÖĞµÄÎ»Í¼¶
 	return -1;//Ã»ÓĞ¿ÕÏĞ¿é
 }
 
-int release_block(int block)//Ïàµ±ÓÚ´ÅÅÌ¿éµÄ¸ñÊ½»¯£¬½«´ÅÅÌÖĞµÄÎ»Í¼¶Á³ö£¬¼ì²é¸Ã¿éÊÇ·ñ¿ÉÊÍ·Å£¬Èô¿ÉÊÍ·ÅÔò½«¶ÔÓ¦Î»Í¼ÖÃ0£¬½«Î»Í¼Ğ´»Ø´ÅÅÌ£¬¸ñÊ½»¯¸Ã´ÅÅÌ¿é£¬Ïàµ±ÓÚÊÍ·Å¸Ã¿é¡£
+int disk::release_block(int block)//Ïàµ±ÓÚ´ÅÅÌ¿éµÄ¸ñÊ½»¯£¬½«´ÅÅÌÖĞµÄÎ»Í¼¶Á³ö£¬¼ì²é¸Ã¿éÊÇ·ñ¿ÉÊÍ·Å£¬Èô¿ÉÊÍ·ÅÔò½«¶ÔÓ¦Î»Í¼ÖÃ0£¬½«Î»Í¼Ğ´»Ø´ÅÅÌ£¬¸ñÊ½»¯¸Ã´ÅÅÌ¿é£¬Ïàµ±ÓÚÊÍ·Å¸Ã¿é¡£
 {
 	if (block <= DATA_START)
 	{
@@ -145,13 +145,13 @@ int release_block(int block)//Ïàµ±ÓÚ´ÅÅÌ¿éµÄ¸ñÊ½»¯£¬½«´ÅÅÌÖĞµÄÎ»Í¼¶Á³ö£¬¼ì²é¸Ã¿é
 	char* block_format = (char*)malloc(BLOCK_SIZE); //ÓÃÓÚ´ÅÅÌ¿éµÄ¸ñÊ½»¯
 
 	FILE* diskp = fopen(DISK, "rb+");//¶ÁĞ´´ò¿ªÒ»¸ö¶ş½øÖÆÎÄ¼ş£¬Ö»ÔÊĞí¶ÁĞ´Êı¾İ¡£
-	fseek(diskp, BITMAP_START * BLOCK_SIZE, SEEK_SET);//¶¨Î»µ½Î»Í¼Î»ÖÃ
+	fseek(diskp, BITMAP_START* BLOCK_SIZE, SEEK_SET);//¶¨Î»µ½Î»Í¼Î»ÖÃ
 	fread(bitmap, MAX_BLOCK_NUM, 1, diskp); //¶ÁÈëbitmap
 
 	*(bitmap + block) = 0; //bitmap¶ÔÓ¦¿éÖÃ0
-	fseek(diskp, BLOCK_SIZE * BITMAP_START, SEEK_SET); //ÎÄ¼şÖ¸Õë¶¨Î»µ½bitmapÆğµã
+	fseek(diskp, BLOCK_SIZE* BITMAP_START, SEEK_SET); //ÎÄ¼şÖ¸Õë¶¨Î»µ½bitmapÆğµã
 	fwrite(bitmap, MAX_BLOCK_NUM, 1, diskp); //½«bitmapĞ´»Ø´ÅÅÌ
-	fseek(diskp, block * BLOCK_SIZE, SEEK_SET); //½«Ö¸ÕëÒÆ¶¯µ½Òª¸ñÊ½»¯µÄ´ÅÅÌ¿éÎ»ÖÃ
+	fseek(diskp, block* BLOCK_SIZE, SEEK_SET); //½«Ö¸ÕëÒÆ¶¯µ½Òª¸ñÊ½»¯µÄ´ÅÅÌ¿éÎ»ÖÃ
 	fwrite(block_format, BLOCK_SIZE, 1, diskp); //´ÅÅÌ¿é¸ñÊ½»¯£¬Ïàµ±ÓÚÊÍ·Å
 	free(bitmap);
 	free(block_format);
@@ -160,13 +160,13 @@ int release_block(int block)//Ïàµ±ÓÚ´ÅÅÌ¿éµÄ¸ñÊ½»¯£¬½«´ÅÅÌÖĞµÄÎ»Í¼¶Á³ö£¬¼ì²é¸Ã¿é
 }
 
 //»ñÈ¡ÎÄ¼ş´óĞ¡
-int get_filesize(os_file* fp)
+int disk::get_filesize(os_file* fp)
 {
 	return fp->f_iNode->i_size;
 }
 
 //ÎÄ¼ş¶Áº¯Êı
-int os_readfile(void* v_buf, int size, os_file* fp)//´«Èë²ÎÊı£ºÊı¾İ»º³åÇø£¬´ı¶Á³öµÄÊı¾İ´óĞ¡£¬¸ÃÎÄ¼şµÄ¾ä±ú¡£¸ù¾İÎÄ¼ş¾ä±úºÍÊı¾İ´óĞ¡£¬¼ÆËã³öÆğÊ¼¿éºÅ£¬¶Á³öµÄ¿éÊı£¬×îºó¿éµÄÆ«ÒÆÁ¿£¬½«ÕâĞ©Êı¾İĞ´µ½»º³åÇø¡£
+int disk::os_readfile(void* v_buf, int size, os_file* fp)//´«Èë²ÎÊı£ºÊı¾İ»º³åÇø£¬´ı¶Á³öµÄÊı¾İ´óĞ¡£¬¸ÃÎÄ¼şµÄ¾ä±ú¡£¸ù¾İÎÄ¼ş¾ä±úºÍÊı¾İ´óĞ¡£¬¼ÆËã³öÆğÊ¼¿éºÅ£¬¶Á³öµÄ¿éÊı£¬×îºó¿éµÄÆ«ÒÆÁ¿£¬½«ÕâĞ©Êı¾İĞ´µ½»º³åÇø¡£
 {
 	if (fp->f_pos + size > fp->f_iNode->i_size) //ÅĞ¶ÏÒª¶ÁµÄÊı¾İÊÇ·ñ³¬³öÎÄ¼ş½çÏŞ
 		return 0;
@@ -215,7 +215,7 @@ int os_readfile(void* v_buf, int size, os_file* fp)//´«Èë²ÎÊı£ºÊı¾İ»º³åÇø£¬´ı¶Á³
 }
 
 //ÎÄ¼şĞ´º¯Êı
-int os_writefile(void* v_buf, int size, os_file* fp)//´«Èë²ÎÊı£ºÊı¾İ»º³åÇø£¬´ıĞ´ÈëµÄÊı¾İ´óĞ¡£¬¸ÃÎÄ¼şµÄ¾ä±ú¡£¾İÎÄ¼ş¾ä±úºÍÊı¾İ´óĞ¡£¬¼ÆËã³öÆğÊ¼¿éºÅ£¬¶Á³öµÄ¿éÊı£¬×îºó¿éµÄÆ«ÒÆÁ¿£¬·ÖÅä´ÅÅÌ¿éÊ±µ÷ÓÃÑ°ÕÒ¿ÕÏĞ¿éºÅº¯ÊıÎªÆä·ÖÅä¿ÕÏĞ¿é¡£
+int disk::os_writefile(void* v_buf, int size, os_file* fp)//´«Èë²ÎÊı£ºÊı¾İ»º³åÇø£¬´ıĞ´ÈëµÄÊı¾İ´óĞ¡£¬¸ÃÎÄ¼şµÄ¾ä±ú¡£¾İÎÄ¼ş¾ä±úºÍÊı¾İ´óĞ¡£¬¼ÆËã³öÆğÊ¼¿éºÅ£¬¶Á³öµÄ¿éÊı£¬×îºó¿éµÄÆ«ÒÆÁ¿£¬·ÖÅä´ÅÅÌ¿éÊ±µ÷ÓÃÑ°ÕÒ¿ÕÏĞ¿éºÅº¯ÊıÎªÆä·ÖÅä¿ÕÏĞ¿é¡£
 {
 	//¼ÆËãÒªĞ´µÄ¿éÊı¼°Æ«ÒÆÁ¿
 	int first_block, block_num, offset, total_block;//·Ö±ğ¼ÇÂ¼Êı¾İËùÔÚµÄ ÆğÊ¼¿éºÅ Á¬ĞøÕ¼ÓÃ¿éÊı ×îºóÕ¼ÓÃ¿éµÄÆ«ÒÆÁ¿
@@ -238,7 +238,7 @@ int os_writefile(void* v_buf, int size, os_file* fp)//´«Èë²ÎÊı£ºÊı¾İ»º³åÇø£¬´ıĞ´
 	{
 		if (fp->f_iNode->block_address[i] > MAX_BLOCK_NUM) //ËµÃ÷ÎÄ¼şµÄµÚi¿éÉĞÎ´±»·ÖÅä
 		{
-			fp->f_iNode->block_address[i] = first_free();
+			fp->f_iNode->block_address[i] = disk::first_free();
 			if (fp->f_iNode->block_address[i] == -1)
 			{
 				fp->f_iNode->block_address[i] = MAX_BLOCK_NUM + 1;
@@ -265,7 +265,7 @@ int os_writefile(void* v_buf, int size, os_file* fp)//´«Èë²ÎÊı£ºÊı¾İ»º³åÇø£¬´ıĞ´
 				cur_bytes = BLOCK_SIZE - fp->f_pos % BLOCK_SIZE;
 			else if (block == first_block + block_num - 1)  //×îºóÒ»¿é
 				cur_bytes = offset;
-			else //ĞèÒª¶Á³öÈ«²¿Êı¾İµÄÖĞ¼ä¿é
+			else //ĞèÒªĞ´ÈëÈ«²¿Êı¾İµÄÖĞ¼ä¿é
 				cur_bytes = BLOCK_SIZE;
 			rewind(diskp);
 			fseek(diskp, fp->f_pos + fp->f_iNode->block_address[block] * BLOCK_SIZE + write_bytes, SEEK_SET);
@@ -276,27 +276,23 @@ int os_writefile(void* v_buf, int size, os_file* fp)//´«Èë²ÎÊı£ºÊı¾İ»º³åÇø£¬´ıĞ´
 	fp->f_pos += size; //¸üĞÂÎÄ¼şÖ¸Õë
 	fp->f_iNode->i_size += size; //¸üĞÂÎÄ¼ş´óĞ¡
 	fseek(diskp, INODE_START * BLOCK_SIZE, SEEK_SET);
-	fwrite(iNode_table, sizeof(iNode) * iNode_NUM, 1, diskp); //iNode_table¸üĞÂ
+	fwrite(FileManager::iNode_table, sizeof(iNode) * iNode_NUM, 1, diskp); //iNode_table¸üĞÂ
 	fclose(diskp); //¹Ø±Õ´ÅÅÌ¶ÁĞ´
 	free(buf);
 	return 1;
 }
 
 //ÃæÏòÎÄ¼şÏµÍ³µÄ¶ÁÄ¿Â¼½Ó¿Ú
-void get_dir(void* dir_buf, iNode* f_inode)
+void disk::get_dir(void* dir_buf, iNode* f_inode)
 {
-	//¸ù¾İ¼ÆËã¿ÉÖªÒ»¸öÄ¿Â¼¾ÍÕ¼32×Ö½Ú,Ò»¸öÄ¿Â¼ÏÂ8¸öÎÄ¼şÏàµ±ÓÚ4¸öblock
-	//int blk_nr, off_set;
-	//blk_nr = DIR_NUM * sizeof(dir) / BLOCK_SIZE + 1;
-	//off_set = DIR_NUM * sizeof(dir) % BLOCK_SIZE;
-	int read_bytes = 0; //ÒÑ¶Á×Ö½ÚÊı
-	FILE* disk_dir = fopen(DEV_NAME, "rb");
-	if (disk_dir) {
+	FILE* diskp = fopen(DISK, "rb");
+	if (diskp)
+	{
 		char* buf = (char*)dir_buf;
-		for (int i = 0; i < FBLK_NUM; i++) {
-			fseek(disk_dir, f_inode->block_address[i] * BLOCK_SIZE, SEEK_SET); //¶¨Î»ÎÄ¼şÖ¸Õë
-			fread(buf + i * BLOCK_SIZE, BLOCK_SIZE, 1, disk_dir);
+		for (int i = 0; i < FBLK_NUM; i++)
+		{
+			fseek(diskp, f_inode->block_address[i] * BLOCK_SIZE, SEEK_SET); //¶¨Î»ÎÄ¼şÖ¸Õë
+			fread(buf + i * BLOCK_SIZE, BLOCK_SIZE, 1, diskp);
 		}
-		//fclose(disk_dir);
 	}
 }

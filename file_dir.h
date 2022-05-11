@@ -1,63 +1,53 @@
-#include <iostream>
+ï»¿#include <iostream>
 #include <string>
 #include <vector>
 #include <stack>
+#include <map>
 #include <malloc.h>
 using namespace std;
 
-/////////*DISK*//////
-#define BLOCK_SIZE 64//´ÅÅÌ¿é´óĞ¡ 64×Ö½Ú
-#define MAX_FILE_NUM 256 //×î´óÎÄ¼şÊıÁ¿£¬Ò²ÊÇ×î´óinodeµÄÊıÁ¿
-#define MAX_BLOCK_NUM 1024 //×î´ó´ÅÅÌ¿éÊıÁ¿£¬¼´´ÅÅÌ×ÜÈİÁ¿
-#define MAX_FILE_SIZE 256 //×î´óÎÄ¼ş³¤¶È£¬256×Ö½Ú£¬Õ¼ËÄ¸ö´ÅÅÌ¿é
-#define INODE_START 1 //inodeÇøÆğÊ¼¿éºÅ£¬0ÎªµÚÒ»¿é,Îª³¬¼¶¿é¿éºÅ
-#define BITMAP_START 129//bitmapÇøÆğÊ¼¿éºÅ£¨inodeÇøÕ¼256*32B£¬Õ¼128¸ö¿é
-#define DATA_START (BITMAP_START + (sizeof(char)*MAX_BLOCK_NUM)/BLOCK_SIZE) //dataÇøÆğÊ¼¿éºÅ (bitmapÇøÆğÊ¼¿éºÅ¼ÓÎ»Í¼Õ¼ÓÃ¿éÊı
-#define DISK "disk.bin"
-/////////*DIR*///////
-#define Name_length 14	//ÎÄ¼şÃû³Æ×î´ó³¤¶È
-#define iNode_NUM 256	//iNodeµÄÊıÁ¿
-#define DIR_FILE_NUM 8	//Ã¿¸öÄ¿Â¼ÎÄ¼şÏÂµÄÎÄ¼ş×î´ó¸öÊı
-#define MAX_DIR_DEPTH 256 //ÏŞÖÆ×î´óµÄÄ¿Â¼Éî¶È
-#define PATH_LENGTH 100	//Â·¾¶×Ö·û´®×î´ó³¤¶È
-#define FBLK_NUM 4		//ÎÄ¼şÖĞblockµÄ¸öÊı
-#define RDONLY 00 //Ö»¶Á
-#define WRONLY 01 //Ö»Ğ´
-#define RDWR 02	  //¶ÁĞ´
-/////////*FILE*//////
-#define DEV_NAME "disk.bin"
-#define BLOCK_SIZE 64	//Êı¾İ¿é´óĞ¡£¬µ¥Î»£º×Ö½Ú
-#define INODE_START 1 	//inodeÇøÆğÊ¼¿éºÅ£¨0ÎªµÚÒ»¿é£©
+#define BLOCK_SIZE 1024		//ç£ç›˜å—å¤§å°\æ•°æ®å—å¤§å° 64å­—èŠ‚#####æ”¹æˆäº†1024
+#define MAX_FILE_NUM 256	//æœ€å¤§æ–‡ä»¶æ•°é‡ï¼Œä¹Ÿæ˜¯æœ€å¤§inodeçš„æ•°é‡
+#define MAX_BLOCK_NUM 1024	//æœ€å¤§ç£ç›˜å—æ•°é‡ï¼Œå³ç£ç›˜æ€»å®¹é‡
+#define MAX_FILE_SIZE 256	//æœ€å¤§æ–‡ä»¶é•¿åº¦ï¼Œ256å­—èŠ‚ï¼Œå å››ä¸ªç£ç›˜å—
+#define INODE_START 1		//inodeåŒºèµ·å§‹å—å·ï¼Œ0ä¸ºç¬¬ä¸€å—,ä¸ºè¶…çº§å—å—å·
+#define BITMAP_START 129	//bitmapåŒºèµ·å§‹å—å·ï¼ˆinodeåŒºå 256*32Bï¼Œå 128ä¸ªå—
+#define DATA_START (BITMAP_START + (sizeof(char)*MAX_BLOCK_NUM)/BLOCK_SIZE) //dataåŒºèµ·å§‹å—å· (bitmapåŒºèµ·å§‹å—å·åŠ ä½å›¾å ç”¨å—æ•°
+#define DISK "disk.bin"		//å®šä¹‰æ¨¡æ‹Ÿç£ç›˜æ–‡ä»¶
+#define Name_length 14		//æ–‡ä»¶åç§°æœ€å¤§é•¿åº¦
+#define iNode_NUM 256		//iNodeçš„æ•°é‡
+#define DIR_FILE_NUM 8		//æ¯ä¸ªç›®å½•æ–‡ä»¶ä¸‹çš„æ–‡ä»¶æœ€å¤§ä¸ªæ•°
+#define MAX_DIR_DEPTH 256	//é™åˆ¶æœ€å¤§çš„ç›®å½•æ·±åº¦
+#define PATH_LENGTH 100		//è·¯å¾„å­—ç¬¦ä¸²æœ€å¤§é•¿åº¦
+#define FBLK_NUM 4			//æ–‡ä»¶ä¸­blockçš„ä¸ªæ•°
+
+extern bool debug;
+
 /////////*DATA*//////
-// iNode
-typedef struct INODE {
-	unsigned short i_mode; //ÎÄ¼şÀàĞÍ
-	int i_size;     //ÎÄ¼ş´óĞ¡
-	int nlinks;     //Á´½ÓÊı
-	int block_address[FBLK_NUM]; //ÎÄ¼şÊı¾İblockµÄÎ»ÖÃ
-	int open_num;   //0Î´´ò¿ª£¬1ÒÑ´ò¿ª
+typedef struct INODE {		// iNode
+	unsigned short i_mode; //æ–‡ä»¶ç±»å‹
+	int i_size;     //æ–‡ä»¶å¤§å°
+	int nlinks;     //é“¾æ¥æ•°
+	int block_address[FBLK_NUM]; //æ–‡ä»¶æ•°æ®blockçš„ä½ç½®
+	int open_num;   //0æœªæ‰“å¼€ï¼Œ1å·²æ‰“å¼€
 }iNode;
 
-// ¼ÇÂ¼µ±Ç°Ëù´¦µÄÂ·¾¶
-extern stack<string> WorkingDir;   //¼ÇÂ¼Â·¾¶Ãû³Æ
-extern stack<unsigned int> WorkingNo;    //¼ÇÂ¼Â·¾¶ÉÏi½ÚµãµÄ±êºÅ
-extern bool debug;
-// ÎÄ¼şÄ¿Â¼Ïî½á¹¹£ºµ±Ç°Ä¿Â¼ÏÂÒ»ÏµÁĞµÄÎÄ¼şÁĞ±í
-typedef struct directory {
-	string file_name;   //ÎÄ¼şÃû³Æ
-	unsigned int iNode_no;  //iNode±àºÅ
+typedef struct directory {	// æ–‡ä»¶ç›®å½•é¡¹ç»“æ„ï¼šå½“å‰ç›®å½•ä¸‹ä¸€ç³»åˆ—çš„æ–‡ä»¶åˆ—è¡¨
+	string file_name;   //æ–‡ä»¶åç§°
+	unsigned int iNode_no;  //iNodeç¼–å·
 }dir;
 
-// ÎÄ¼ş¾ä±ú
-typedef struct OS_FILE {
-	iNode* f_iNode; //Ö¸Ïò¶ÔÓ¦µÄiNode
-	long int f_pos; //¶ÁÖ¸Õë
+typedef struct OS_FILE {	// æ–‡ä»¶å¥æŸ„
+	iNode* f_iNode; //æŒ‡å‘å¯¹åº”çš„iNode
+	long int f_pos; //è¯»æŒ‡é’ˆ
 }os_file;
 
-// È«¾Ö±äÁ¿
-extern iNode iNode_table[iNode_NUM];  //iNode tableµÄÊı×é£¬Êı×éÏÂ±ê¶ÔÓ¦iNode±àºÅ
-extern dir root_dir[MAX_FILE_NUM];   //¸ùÄ¿Â¼ Êı×éÊµÏÖ  ÍùÏÂµÄÃ¿¸ö×ÓÄ¿Â¼Ò²ÊÇdirÀàĞÍµÄÊı×é£¬Ã¿Ò»ÏîÊÇÒ»¸öÎÄ¼şÄ¿Â¼Ïî
-extern dir* current_dir;   //±£´æÃ¿´Î¸üĞÂanalyse_path·µ»ØµÄdirÊı×é£¬¼´µ±Ç°Ä¿Â¼µÄdirÊı×é
+//è¶…çº§å—ç»“æ„
+typedef struct super_block {
+	unsigned  sb_inodenum; //ç£ç›˜ä¸­inodeèŠ‚ç‚¹æ•°
+	unsigned  sb_blocknum; //ç£ç›˜ä¸­çš„ç‰©ç†å—æ•°
+	unsigned  sb_filemaxsize; //æ–‡ä»¶çš„æœ€å¤§é•¿åº¦
+}super_block;
 
 class fileTOOLS {
 private:
@@ -73,48 +63,74 @@ public:
 
 class DIR {
 public:
-	static void init_dir(dir blankdir[]);
-	static vector<pair<string, unsigned short>> os_ls();
-	static bool os_cd(string newpath);
-	static bool os_rmdir(string dir_name);
+	static void init_dir(dir blankdir[]);	//	å®ç°ç›®å½•çš„åˆå§‹åŒ–
+	static vector<pair<string, unsigned short>> os_ls();	// å®ç°lså‘½ä»¤ï¼Œåˆ—å‡ºå½“å‰ç›®å½•ä¸‹æ‰€æœ‰æ–‡ä»¶
+	static bool os_cd(string newpath);	//	å®ç°cdå‘½ä»¤ï¼Œå®ç°ç›®å½•çš„è·³è½¬
+	static bool os_rmdir(string dir_name);	//	å®ç°rmdir filenameå‘½ä»¤ï¼Œåˆ é™¤å½“å‰ç›®å½•ä¸‹åä¸ºfilenameçš„ç©ºç›®å½•
 };
 
 class File {
 public:
-	static void init_iNode(iNode* blankiNode);
-	static iNode Fill_in_iNode(unsigned short f_type);
-	static iNode* Create_File(string filename, unsigned short f_type);
-	static os_file* Open_File(string f_name);
-	static void Close_File(os_file* f);
-	static int os_rm(string f_name);
+	static void init_iNode(iNode* blankiNode);	//	å®ç°ä¸€ä¸ªiNodeçš„åˆå§‹åŒ–
+	static iNode Fill_in_iNode(unsigned short f_type);	// å®Œå–„æ–°å»ºæ–‡ä»¶çš„iNodeä¿¡æ¯
+	static iNode* Create_File(string filename, unsigned short f_type);	// åˆ›å»ºæ–‡ä»¶â€”â€”â€”â€”Create_File(filename, 0/1);
+	static os_file* Open_File(string f_name);	// æ‰“å¼€æ–‡ä»¶ï¼Œè¿”å›ä¸€ä¸ªæ–‡ä»¶å¥æŸ„â€”â€”â€”â€”Open_File(filename);
+	static void Close_File(os_file* f);	// å…³é—­æ–‡ä»¶ï¼šä¿®æ”¹open_numå¹¶é‡Šæ”¾å¥æŸ„â€”â€”â€”â€”Close_File(fp);
+	static int os_rm(string f_name);	// åˆ é™¤æ™®é€šæ–‡ä»¶â€”â€”â€”â€”os_rm(filename);
 };
 
+class disk {
+public:
+	static bool format_disk();//æ ¼å¼åŒ–ç£ç›˜ï¼ŒæˆåŠŸè¿”å›True
+	static bool init_disk(); //åˆå§‹åŒ–ç£ç›˜
+	static bool start_disk();//å¯åŠ¨ç£ç›˜
+	static int first_free();//æ‰¾åˆ°ç¬¬ä¸€ä¸ªç©ºé—²å—å·ï¼Œä¿®æ”¹å…¶bitmapè¡¨ç¤ºè¢«å ç”¨ï¼Œå¹¶å°†å…¶è¿”å›
+	static int release_block(int block);//é‡Šæ”¾ä¸€ä¸ªè¢«å ç”¨çš„å—
+	static int get_filesize(os_file* fp);//è·å–æ–‡ä»¶å¤§å°
+	static void get_dir(void* dir_buf, iNode* f_inode);//é¢å‘æ–‡ä»¶ç³»ç»Ÿçš„è¯»ç›®å½•æ¥å£
+	/*	å¯¹å¤–æ¥å£	*/
+	static int os_readfile(void* v_buf, int size, os_file* fp);//é¢å‘è¿›ç¨‹çš„è¯»æ–‡ä»¶æ¥å£
+	static int os_writefile(void* v_buf, int size, os_file* fp);//é¢å‘è¿›ç¨‹çš„å†™æ–‡ä»¶æ¥å£
+	static bool write_block(long block, char* buf)//ç£ç›˜å—å†™å…¥ç¼“å†²åŒº
+	static bool read_block(long block, char* buf)//ç£ç›˜å—è¯»å…¥ç¼“å†²åŒº
+	/*	å¯¹å¤–æ¥å£ç»“æŸ	*/
+};
+
+class FileManager {
+	friend class DIR;
+	friend class File;
+	friend class FileTOOLS;
+	friend class disk;
+public:
+	// å…¨å±€å˜é‡
+	static iNode iNode_table[iNode_NUM];  //iNode tableçš„æ•°ç»„ï¼Œæ•°ç»„ä¸‹æ ‡å¯¹åº”iNodeç¼–å·
+	static dir root_dir[MAX_FILE_NUM];    //æ ¹ç›®å½• æ•°ç»„å®ç°  å¾€ä¸‹çš„æ¯ä¸ªå­ç›®å½•ä¹Ÿæ˜¯dirç±»å‹çš„æ•°ç»„ï¼Œæ¯ä¸€é¡¹æ˜¯ä¸€ä¸ªæ–‡ä»¶ç›®å½•é¡¹
+	static dir* current_dir;			  //ä¿å­˜æ¯æ¬¡æ›´æ–°analyse_pathè¿”å›çš„diræ•°ç»„ï¼Œå³å½“å‰ç›®å½•çš„diræ•°ç»„
+	static stack<string> WorkingDir;	  //è®°å½•è·¯å¾„åç§°
+	static stack<unsigned int> WorkingNo; //è®°å½•è·¯å¾„ä¸ŠièŠ‚ç‚¹çš„æ ‡å·
+	static map<int, unsigned long int> NumOfFile;
+
+	/*	å¯¹å¤–æ¥å£	*/
+	static void InitFileSys();			// åˆå§‹åŒ–æ–‡ä»¶ç®¡ç†ç³»ç»Ÿï¼Œå¼€æœºåå°±è¦åšçš„äº‹æƒ…
+	static bool ls();					//	è¿”å›å½“å‰ç›®å½•ä¸‹çš„æ‰€æœ‰çš„æ–‡ä»¶åç§°ã€ç±»å‹####
+	static string pwd();				//	æ˜¾ç¤ºå½“å‰æ‰€åœ¨è·¯å¾„,è¿”å›å½“å‰è·¯å¾„å­—ç¬¦ä¸²
+	static bool cd(string dirname);		//	æˆåŠŸè¿”å› Tï¼Œä¸æˆåŠŸè¿”å› F
+	static bool cat(string filename); 	//	æ‰“å¼€txtæ–‡ä»¶ï¼Œå¹¶æ‰“å°æ˜¾ç¤º
+	static bool mkdir(string dirname);	//	åœ¨å½“å‰ç›®å½•ä¸‹åˆ›å»ºæ–°ç›®å½•
+	static bool mkfile(string filename, unsigned short filetype);	//	åœ¨å½“å‰ç›®å½•ä¸‹åˆ›å»ºæ–°æ–‡ä»¶
+	static bool rmdir(string dirname);		//	åœ¨å½“å‰ç›®å½•ä¸‹åˆ é™¤å­ç›®å½•ï¼ŒæˆåŠŸè¿”å› Tï¼Œä¸æˆåŠŸè¿”å› F
+	static bool rmfile(string filename);	//	åœ¨å½“å‰ç›®å½•ä¸‹åˆ é™¤å­æ–‡ä»¶ï¼ŒæˆåŠŸè¿”å› Tï¼Œä¸æˆåŠŸè¿”å› F
+	static int openFile(string filename);	//	æ‰“å¼€ä¸€ä¸ªæ–‡ä»¶ï¼Œè¿”å›æ–‡ä»¶æè¿°ç¬¦æ ‡è¯†ID
+	static void closeFile(int filenum);		//	å…³é—­æ–‡ä»¶æè¿°ç¬¦ä¸ºfilenumçš„æ–‡ä»¶
+	static unsigned short getFileType(string filename);	//è¿”å›å½“å‰ç›®å½•ä¸‹çš„ä¸€ä¸ªæ–‡ä»¶çš„ç±»å‹
+	/*	å¯¹å¤–æ¥å£ç»“æŸ	*/
 
 
+	static void waitForInput();
+private:
+	static string trim(string str);
+	static string displayPath(int flag);
+	static void InputAnalyse(vector<string> args);
+	static void InputCut(string input);
+};
 
-typedef struct super_block {  //³¬¼¶¿é½á¹¹
-	unsigned  sb_inodenum; //´ÅÅÌÖĞinode½ÚµãÊı
-	unsigned  sb_blocknum; //´ÅÅÌÖĞµÄÎïÀí¿éÊı
-	unsigned  sb_filemaxsize; //ÎÄ¼şµÄ×î´ó³¤¶È
-}super_block;
-
-// ¸ñÊ½»¯´ÅÅÌ£¬Ïò´ÅÅÌÎÄ¼şÖĞĞ´Èë'0'£¬³É¹¦·µ»ØTrue
-bool format_disk();
-// ³õÊ¼»¯´ÅÅÌ
-bool init_disk();
-// Æô¶¯´ÅÅÌ
-bool start_disk();
-
-// ÕÒµ½µÚÒ»¸ö¿ÕÏĞ¿éºÅ£¬ĞŞ¸ÄÆäbitmap±íÊ¾±»Õ¼ÓÃ£¬²¢½«Æä·µ»Ø
-int first_free();
-// ÊÍ·ÅÒ»¸ö±»Õ¼ÓÃµÄ¿é
-int release_block(int block);
-
-// »ñÈ¡ÎÄ¼ş´óĞ¡
-int get_filesize(os_file* fp);
-// ÃæÏò½ø³ÌµÄ¶ÁÎÄ¼ş½Ó¿Ú
-int os_readfile(void* v_buf, int size, os_file* fp);
-// ÃæÏò½ø³ÌµÄĞ´ÎÄ¼ş½Ó¿Ú
-int os_writefile(void* v_buf, int size, os_file* fp);
-//ÃæÏòÎÄ¼şÏµÍ³¶ÁÄ¿Â¼½Ó¿Ú
-void get_dir(void* dir_buf, iNode* f_inode);
