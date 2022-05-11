@@ -17,8 +17,8 @@ void DIR::init_dir(dir blankdir[]) {
 // 设置默认参数是当前目录————os_ls();列出当前目录下所有文件名称
 vector<pair<string, unsigned short>> DIR::os_ls() {
     vector<pair<string, unsigned short>> files;
-    for (int i = 0; i < DIR_FILE_NUM && current_dir[i].file_name != "#"; i++) {
-        pair<string, unsigned short> f = make_pair(current_dir[i].file_name, iNode_table[current_dir[i].iNode_no].i_mode);
+    for (int i = 0; i < DIR_FILE_NUM && FileManager::current_dir[i].file_name != "#"; i++) {
+        pair<string, unsigned short> f = make_pair(FileManager::current_dir[i].file_name, FileManager::iNode_table[FileManager::current_dir[i].iNode_no].i_mode);
         files.push_back(f);
     }
     return files;
@@ -29,10 +29,10 @@ vector<pair<string, unsigned short>> DIR::os_ls() {
 bool DIR::os_cd(string newpath) {
     int tmp_no = -1;
     if (newpath == "..") {
-        if (WorkingDir.size() > 1) {
-            WorkingNo.pop();
-            get_dir(current_dir, &(iNode_table[WorkingNo.top()]));
-            WorkingDir.pop();
+        if (FileManager::WorkingDir.size() > 1) {
+            FileManager::WorkingNo.pop();
+            disk::get_dir(FileManager::current_dir, &(FileManager::iNode_table[FileManager::WorkingNo.top()]));
+            FileManager::WorkingDir.pop();
         }
         return 1;
     }
@@ -45,7 +45,7 @@ bool DIR::os_cd(string newpath) {
         return 0;
     }
     else {
-        current_dir = temp;
+        FileManager::current_dir = temp;
         return 1;
     }
 }
@@ -57,13 +57,13 @@ bool DIR::os_rmdir(string dir_name) {
         cout << "ERROR——找不到正确的文件或目录" << endl;
         return 0;
     }
-    unsigned int find_iNode = (*(current_dir + f_i)).iNode_no;
-    if (iNode_table[find_iNode].i_mode == 1) {
+    unsigned int find_iNode = (*(FileManager::current_dir + f_i)).iNode_no;
+    if (FileManager::iNode_table[find_iNode].i_mode == 1) {
         cout << "ERROR——该文件为普通文件" << endl;
         return 0; //普通文件，错误
     }
     dir* f_dir = (dir*)malloc(sizeof(dir) * DIR_FILE_NUM);
-    get_dir(f_dir, &iNode_table[find_iNode]);    //####磁盘部分
+    disk::get_dir(f_dir, &FileManager::iNode_table[find_iNode]);    //####磁盘部分
     int i;
     for (i = 0; i < DIR_FILE_NUM && f_dir[i].iNode_no == iNode_NUM + 1; i++) {}
     if (i == DIR_FILE_NUM) {//此目录下无文件
@@ -77,3 +77,26 @@ bool DIR::os_rmdir(string dir_name) {
     }
 }
 
+//磁盘块写入缓冲区
+bool disk::write_block(long block, char* buf)
+{
+    FILE* diskp = fopen(DISK, "rb+");
+    if (diskp) {
+        fseek(diskp, (block * BLOCK_SIZE), SEEK_SET); //定位到对应块的位置
+        fwrite(buf, BLOCK_SIZE, 1, diskp);
+        fclose(diskp);
+        return true;
+    }
+}
+
+//磁盘块读入缓冲区
+bool disk::read_block(long block, char* buf)
+{
+    FILE* diskp = fopen(DISK, "r");
+    if (diskp) {
+        fseek(diskp, (block * BLOCK_SIZE), SEEK_SET); //定位到对应块的位置
+        fread(buf, BLOCK_SIZE, 1, diskp);
+        fclose(diskp);
+        return true;
+    }
+}
