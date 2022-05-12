@@ -28,11 +28,13 @@ class CPU : public QObject
 
                 void saveContext();
 
+                void handlePageFault();
+
 		// get the next instruction from PC
-		bool fetchInstruction();
+                Event fetchInstruction();
 
 		// execute an instruction
-		int executeInstruction();
+                Event executeInstruction();
 
 		// finish this pcb
                 void finishPCB(Event event);

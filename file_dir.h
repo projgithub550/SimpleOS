@@ -108,6 +108,7 @@ bool start_disk();
 
 // 找到第一个空闲块号，修改其bitmap表示被占用，并将其返回
 int first_free();
+
 // 释放一个被占用的块
 int release_block(int block);
 

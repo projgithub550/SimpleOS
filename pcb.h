@@ -1,8 +1,8 @@
 #pragma once
 #include<string>
 #include<map>
+#include "constant.h"
 
-#define REG_NUM 4
 
 using namespace std;
 
@@ -18,7 +18,8 @@ enum Event
 {
     normal,
     std_io,
-    disk_io
+    disk_io,
+    end
 };
 
 //enum IOtype
@@ -53,9 +54,14 @@ class PCB
 
         //文件系统信息
         string workDir;
-        map<int,int> fileTable;
+        vector<int> fileIds;
         Operation ope;
         int activeFile;
+        int size;
+        int startAddr;
+
+        bool isPageFault;
+
 
     //getter and setter
     public:
@@ -213,4 +219,32 @@ class PCB
         {
             ope=o;
         }
+
+        int getSize()
+        {
+            return this->size;
+        }
+        void setSize(int _size)
+        {
+            this->size = _size;
+        }
+
+        int getStartAddr()
+        {
+            return this->startAddr;
+        }
+        void setStartAddr(int start_addr)
+        {
+           this->startAddr = start_addr;
+        }
+
+        bool getIsPageFault()
+        {
+            return this->isPageFault;
+        }
+        void setIsPageFault(bool isFault)
+        {
+           this->isPageFault = isFault;
+        }
+
 };

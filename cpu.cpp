@@ -10,15 +10,15 @@ void CPU::executePCB()
     Event event = normal;
 
 	//step 1: load the next instrcutions into IR
-	hasNext = fetchInstruction();
+    event = fetchInstruction();
 
-	while (hasNext)
+    while (event == normal)
 	{
 		// step 2: execute the instruction stored in IR
 		// check whether this pcb is blocked or not
         if ((event = executeInstruction()) != normal ) break;
 		
-		hasNext = fetchInstruction();
+        event = fetchInstruction();
 	}
 
     //finish executing and signal manager when pcb is completed or blocked
@@ -41,15 +41,25 @@ void CPU::saveContext()
 
 }
 
-// get the next instruction from PC
-bool CPU::fetchInstruction() {
-    // IR=readText(pId,PC);
-    // PC++;
 
+// get the next instruction from PC
+Event CPU::fetchInstruction() {
+
+    IR = readMem(pId, PC);
+
+    //page fault
+    if(IR == -1)
+    {
+        runningPCB->setIsPageFault(true);
+        return disk_io;
+    }
+
+    PC += 2;
+    return normal;
 }
 
 // execute an instruction, return pcb's state(blocked:-1)
-int CPU::executeInstruction() {
+Event CPU::executeInstruction() {
 
 	// is an io request, pcb need to block
 	if (io_request) {
@@ -69,6 +79,9 @@ int CPU::executeInstruction() {
     unsigned short Des = (unsigned short)((IR & 0x0300) >> 8);
     unsigned short Addr = (unsigned short)((IR & 0x00ff));
 
+
+    文件操作指令： op + fileid + addr + size
+                 3     3
     switch (OpCode)
     {
     case 0: // 空操作
@@ -122,6 +135,14 @@ int CPU::executeInstruction() {
         }
         return -1;
     case 13: // 调用接口，完成输入输出，注意Signal
+            IR
+
+                    op
+                    fileId
+                    addr
+                    size
+
+
         switch (Src)
         {
         case 0: // 输入

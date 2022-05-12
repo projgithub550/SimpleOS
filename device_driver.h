@@ -28,8 +28,12 @@ private:
 	queue<PCB*> waitingQue;
 	PCB* runningPCB;
 
+
+
 public:
     void pushWaitingQue(PCB* pcb);
+
+    void handlePageFault();
 
 	// finish executing a PCB, signal the manager
 	void finishPCB();

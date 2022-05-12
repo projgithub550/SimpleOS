@@ -114,7 +114,8 @@ iNode* File::Create_File(string filename, unsigned short f_type) {
 
 // 打开文件————Open_File(filename);
 // 根据文件名定位到其iNode，修改open_num，创建文件句柄os_file
-os_file* File::Open_File(string f_name) {
+os_file* File::Open_File(string f_name)
+{
     os_file* current_file = (os_file*)malloc(sizeof(os_file));
     dir* current = current_dir;//当前所在目录的dir*数组
     if (!current) {

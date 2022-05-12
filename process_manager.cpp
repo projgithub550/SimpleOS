@@ -16,6 +16,7 @@ void ProcessManager::createProcess(string workDir)
     pcb->setOperation(-1);
 
     //step 2: create a virtual address space for it and build a page table
+    memory -> initPageTable(workDir)
     pcb->setTextStart(0);
     pcb->setTextEnd();
     pcb->setDataStart();
