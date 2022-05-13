@@ -18,22 +18,22 @@ page_table::page_table()
     }
 }
 
-// void page_table::Init_page(string f_name)
-// {
-//     os_file* os_f=File::Open_File(f_name);//先通过文件目录查找到文件的句柄
-//     for(int i=0;i<FBLK_NUM ;i++)//将文件句柄对应的磁盘块号与分配的页号对应
-//        {
-//            for(int j=0;j<occupancy/2;j++)
-//            {
-//                if(this->table[j][1]==-2)
-//                {
-//                     this->table[j][1]=os_f->f_iNode->block_address[i];//通过句柄找到对应的磁盘块号给没有存上的页表对应上
-//                     break;
-//                }
-//            }
-//        }
-//     File::Close_File(os_f);
-// }
+void page_table::Init_page(string f_name)
+{
+   os_file* os_f=File::Open_File(f_name);//先通过文件目录查找到文件的句柄
+     for(int i=0;i<FBLK_NUM ;i++)//将文件句柄对应的磁盘块号与分配的页号对应
+        {
+            for(int j=0;j<occupancy/2;j++)
+            {
+               if(this->table[j][1]==-2)
+                {
+                     this->table[j][1]=os_f->f_iNode->block_address[i];//通过句柄找到对应的磁盘块号给没有存上的页表对应上
+                    break;
+               }
+            }
+       }
+     File::Close_File(os_f);
+ }
 
 void page_table::Insert(int page_num,int temp_block)//插入一个空页
 {
