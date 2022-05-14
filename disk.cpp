@@ -307,6 +307,7 @@ bool disk::write_block(long block, char* buf)
         fclose(diskp);
         return true;
     }
+	return false;
 }
 
 //´ÅÅÌ¿é¶ÁÈë»º³åÇø
@@ -319,4 +320,5 @@ bool disk::read_block(long block, char* buf)
         fclose(diskp);
         return true;
     }
+	return false;
 }

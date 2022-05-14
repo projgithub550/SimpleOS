@@ -88,11 +88,12 @@ public:
 	static int release_block(int block);//释放一个被占用的块
 	static int get_filesize(os_file* fp);//获取文件大小
 	static void get_dir(void* dir_buf, iNode* f_inode);//面向文件系统的读目录接口
+	static int os_readfile(void* v_buf, int size, os_file* fp);//内部读文件接口
+	static int os_writefile(void* v_buf, int size, os_file* fp);//内部读文件接口
+
 	/*	对外接口	*/
-	static int os_readfile(void* v_buf, int size, os_file* fp);//面向进程的读文件接口
-	static int os_writefile(void* v_buf, int size, os_file* fp);//面向进程的写文件接口
-	static bool write_block(long block, char* buf)//磁盘块写入缓冲区
-	static bool read_block(long block, char* buf)//磁盘块读入缓冲区
+	static bool write_block(long block, char* buf);//磁盘块写入缓冲区
+	static bool read_block(long block, char* buf);//磁盘块读入缓冲区
 	/*	对外接口结束	*/
 };
 
@@ -122,15 +123,21 @@ public:
 	static bool rmfile(string filename);	//	在当前目录下删除子文件，成功返回 T，不成功返回 F
 	static int openFile(string filename);	//	打开一个文件，返回文件描述符标识ID
 	static void closeFile(int filenum);		//	关闭文件描述符为filenum的文件
+	static int readfile(int filenum, int size, void* v_buf);//面向进程的读文件接口
+	static int writefile(int filenum, int size, void* v_buf);//面向进程的写文件接口
 	static unsigned short getFileType(string filename);	//返回当前目录下的一个文件的类型
 	/*	对外接口结束	*/
 
-
+	/*	文件内部测试所用函数	*/
 	static void waitForInput();
+	/*	文件内部测试所用函数结束	*/
+
 private:
+	/*	文件内部测试所用函数	*/
 	static string trim(string str);
 	static string displayPath(int flag);
 	static void InputAnalyse(vector<string> args);
 	static void InputCut(string input);
+	/*	文件内部测试所用函数结束	*/
 };
 
