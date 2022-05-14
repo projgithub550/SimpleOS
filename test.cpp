@@ -9,8 +9,11 @@
 #include "file_dir.h"
 using namespace std;
 
-bool isExit;
-bool debug;
+bool debug;		// 文件内部测试时所用，debug = 1，则清空root下所有已存在的文件再重新开始
+// debug = 0,则不清空root下所有文件，若要删除debug,则要删除disk::start_disk()函数中的条件语句
+				
+
+bool isExit;	//	文件内部测试所用，之后可以删掉。
 
 
 void FileManager::InitFileSys() {
@@ -22,7 +25,6 @@ void FileManager::InitFileSys() {
 	/*  初始化当前工作环境  */
 	WorkingDir.push("root"); // 当前工作目录为root之下
 	WorkingNo.push(0);  //  root目录的i节点号为0
-	isExit = false;
 }
 
 //vector<pair<string, unsigned short>> 
@@ -126,6 +128,7 @@ int FileManager::openFile(string filename) {
 	NumOfFile[num] = address;
 	return num;
 }
+
 void FileManager::closeFile(int filenum) {
 	unsigned long int address = NumOfFile[filenum];
 	NumOfFile.erase(filenum);
@@ -146,17 +149,29 @@ unsigned short FileManager::getFileType(string filename) {
 	return f_type;
 }
 
+int FileManager::readfile(int filenum, int size, void* v_buf)//面向进程的读文件接口
+{
+	os_file* fp = (os_file*)NumOfFile[filenum];
+	return disk::os_readfile(v_buf, size, fp);
+}
+
+int FileManager::writefile(int filenum, int size, void* v_buf)//面向进程的写文件接口
+{
+	os_file* fp = (os_file*)NumOfFile[filenum];
+	return disk::os_writefile(v_buf, size, fp);
+
+}
 
 
 
 
-
+/* 该函数为文件内部测试所用的函数 */
 string FileManager::trim(string str) {
 	str.erase(0, str.find_first_not_of(" "));
 	str.erase(str.find_last_not_of(" ") + 1);
 	return str;
 }
-
+/* 该函数为文件内部测试所用的函数 */
 string FileManager::displayPath(int flag) {
 	stack<string> tempdir(WorkingDir);
 	vector<string> temppath;
@@ -176,7 +191,7 @@ string FileManager::displayPath(int flag) {
 	else
 		return path;
 }
-
+/* 该函数为文件内部测试所用的函数 */
 void FileManager::InputAnalyse(vector<string> args){
 	int inPos = 0;
 
@@ -259,6 +274,7 @@ void FileManager::InputAnalyse(vector<string> args){
 	}
 }
 
+/* 该函数为文件内部测试所用的函数 */
 void FileManager::InputCut(string input){
 	stringstream stream;
 	stream << input;
@@ -271,6 +287,7 @@ void FileManager::InputCut(string input){
 	InputAnalyse(argv);
 }
 
+/* 该函数为文件内部测试所用的函数 */
 void FileManager::waitForInput(){
 	char tmp[256];
 	displayPath(0);
@@ -290,12 +307,14 @@ stack<string> FileManager::WorkingDir;		//记录路径名称
 stack<unsigned int> FileManager::WorkingNo; //记录路径上i节点的标号
 map<int, unsigned long int> FileManager::NumOfFile;
 
+/* main函数为文件内部测试所用的函数 */
 int main() {
 	/*  初始化当前工作环境  */
 	/*  首先激活磁盘（包括格式化和初始化）
 	/*  磁盘格式化时会建立模拟磁盘文件
 	/*  磁盘初始化时会初始化超级块、初始化iNode表、初始化位图、初始化目录表，最后写入磁盘   */
 	FileManager::InitFileSys();
+	isExit = false;
 	while (!isExit)
 		FileManager::waitForInput(); //  开始等待用户输入
 	return 0;
