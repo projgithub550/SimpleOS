@@ -296,3 +296,27 @@ void disk::get_dir(void* dir_buf, iNode* f_inode)
 		}
 	}
 }
+
+//磁盘块写入缓冲区
+bool disk::write_block(long block, char* buf)
+{
+    FILE* diskp = fopen(DISK, "rb+");
+    if (diskp) {
+        fseek(diskp, (block * BLOCK_SIZE), SEEK_SET); //定位到对应块的位置
+        fwrite(buf, BLOCK_SIZE, 1, diskp);
+        fclose(diskp);
+        return true;
+    }
+}
+
+//磁盘块读入缓冲区
+bool disk::read_block(long block, char* buf)
+{
+    FILE* diskp = fopen(DISK, "r");
+    if (diskp) {
+        fseek(diskp, (block * BLOCK_SIZE), SEEK_SET); //定位到对应块的位置
+        fread(buf, BLOCK_SIZE, 1, diskp);
+        fclose(diskp);
+        return true;
+    }
+}
