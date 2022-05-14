@@ -1,41 +1,38 @@
 #pragma once
 #include "pcb.h"
 #include "process_manager.h"
-class CPU : public QObject
+
+const int BLOCK_IO = -2;   // 读写文件中断
+const int BLOCK_DISK = -1; // 缺页中断
+const int NEXT = 1;		   // 指令正常执行
+const int END = 0;		   // 指令结束执行
+const int BLOCK = -1;	   // 读写指令失败后返回值，意味着缺页中断的发生
+
+class CPU
 {
-    Q_OBJECT
-    signals:
-        void tellManDead();
-        void tellManBlocked();
+private:
+	// 在执行读写文件操作前准备如下：[7]存储读写意图，[0]存储文件句柄，[6]存储读取大小，[5]存储开始地址
+	short Reg[8]; // [0]=0
+	short PC;
+	short IR;
 
-    public slots:
-        // this function is called in run(), to execute a pcb
-        void executePCB();
+	PCB *runningPCB;
+	ProcessManager *manager;
 
-	private:
-        int Reg[REG_NUM];
-        unsigned short PC;
-        unsigned short IR;
-        bool Flag; // 标志位
+	short getReg(int i)
+	{
+		if (i == 0)
+			return 0;
+		return Reg[i];
+	}
 
-        PCB* runningPCB;
-		
-	public:
-        void setRunningPCB(PCB* pcb){runningPCB = pcb;}
-        PCB* getRunningPCB(){return runningPCB;}
-
-                void recoverContext();
-
-                void saveContext();
-
-                void handlePageFault();
-
-		// get the next instruction from PC
-                Event fetchInstruction();
-
-		// execute an instruction
-                Event executeInstruction();
-
-		// finish this pcb
-                void finishPCB(Event event);
+public:
+	void CPU::recoverContext(); // 恢复现场
+	void CPU::saveContext(); // 保存现场
+	
+	void executePCB();		 // 执行PCB
+	void finishPCB();		 // 结束PCB
+	
+	int fetchInstruction(); // 获取指令
+	int executeInstruction(); // 执行指令
 };

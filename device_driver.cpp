@@ -19,6 +19,7 @@ void DeviceDriver::handleEvent(IOType _type)
 
     //step 1: find the file we are about to operate
     int operFile = runningPCB->getActiveFile();
+    char buff[];
 
     //step 2: operate this file through fileSystem interface
     if(runningPCB->getOperation() == op_read)//read
