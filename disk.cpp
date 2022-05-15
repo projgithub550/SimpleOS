@@ -209,6 +209,7 @@ int disk::os_readfile(void* v_buf, int size, os_file* fp)//´«Èë²ÎÊı£ºÊı¾İ»º³åÇø£
 			read_bytes += cur_bytes;
 		}
 	}
+	fp->f_pos += size; //¸üĞÂÎÄ¼şÖ¸Õë
 	fclose(diskp);
 	v_buf = (void*)buf;
 	return 1;
