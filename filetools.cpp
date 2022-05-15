@@ -5,163 +5,163 @@
 #include "file_dir.h"
 using namespace std;
 
-// ÅĞ¶ÏÖØÃûÎÄ¼ş
+// åˆ¤æ–­é‡åæ–‡ä»¶
 int fileTOOLS::same_name(string f_name, dir item[]) {
-	int i = 0;
-	for (i = 0; i < DIR_FILE_NUM && item[i].iNode_no != iNode_NUM + 1 && item[i].file_name != f_name; i++) {}
-	if (item[i].iNode_no == iNode_NUM + 1 || i == DIR_FILE_NUM)
-		return 0; //±éÀúÒ»±é£¬Ã»ÓĞÖØÃû
-	else
-		return 1; //ÓĞÖØÃû
+        int i = 0;
+        for (i = 0; i < DIR_FILE_NUM && item[i].iNode_no != iNode_NUM + 1 && item[i].file_name != f_name; i++) {}
+        if (item[i].iNode_no == iNode_NUM + 1 || i == DIR_FILE_NUM)
+                return 0; //éå†ä¸€éï¼Œæ²¡æœ‰é‡å
+        else
+                return 1; //æœ‰é‡å
 }
 
-// ¸ù¾İ¸¸Ä¿Â¼ºÍ×ÓÎÄ¼şÃû³Æ£¬ÕÒµ½×ÓÎÄ¼şiNodeµÄ±àºÅ
+// æ ¹æ®çˆ¶ç›®å½•å’Œå­æ–‡ä»¶åç§°ï¼Œæ‰¾åˆ°å­æ–‡ä»¶iNodeçš„ç¼–å·
 unsigned int fileTOOLS::find_son_iNode(string son_name, dir* father) {
-	int i;
-	for (i = 0; i < DIR_FILE_NUM && son_name != (*(father + i)).file_name; i++) {}
-	if (i == DIR_FILE_NUM) {
-		cout << "ERROR¡ª¡ª¸¸Ä¿Â¼ÏÂÃ»ÓĞÕÒµ½¸ÃÎÄ¼ş" << endl;
-		return iNode_NUM + 1;
-	}
-	return (*(father + i)).iNode_no;
+        int i;
+        for (i = 0; i < DIR_FILE_NUM && son_name != (*(father + i)).file_name; i++) {}
+        if (i == DIR_FILE_NUM) {
+                cout << "ERRORâ€”â€”çˆ¶ç›®å½•ä¸‹æ²¡æœ‰æ‰¾åˆ°è¯¥æ–‡ä»¶" << endl;
+                return iNode_NUM + 1;
+        }
+        return (*(father + i)).iNode_no;
 }
 
-// ´Ódir* FileManager::current_dirÖĞ²éÕÒµ½×ÓÎÄ¼şÔÚÄ¿Â¼µÄÎ»ÖÃ£¨Êı×éÏÂ±ê£© 
+// ä»dir* FileManager::current_dirä¸­æŸ¥æ‰¾åˆ°å­æ–‡ä»¶åœ¨ç›®å½•çš„ä½ç½®ï¼ˆæ•°ç»„ä¸‹æ ‡ï¼‰
 int fileTOOLS::find_son_pos(string f_name) {
-	int i;
-	for (i = 0; i < DIR_FILE_NUM && (*(FileManager::current_dir + i)).file_name != f_name; i++) {}
-	if (i == DIR_FILE_NUM) { //Ä¿Â¼ÖĞÃ»ÓĞ¸ÃÎÄ¼ş
-		cout << "ERROR¡ª¡ªµ±Ç°Ä¿Â¼Ã»ÓĞÕÒµ½¸ÃÎÄ¼şÎ»ÖÃ" << endl;
-		return DIR_FILE_NUM + 1;
-	}
-	return i;
+        int i;
+        for (i = 0; i < DIR_FILE_NUM && (*(FileManager::current_dir + i)).file_name != f_name; i++) {}
+        if (i == DIR_FILE_NUM) { //ç›®å½•ä¸­æ²¡æœ‰è¯¥æ–‡ä»¶
+                cout << "ERRORâ€”â€”å½“å‰ç›®å½•æ²¡æœ‰æ‰¾åˆ°è¯¥æ–‡ä»¶ä½ç½®" << endl;
+                return DIR_FILE_NUM + 1;
+        }
+        return i;
 }
 
-// ·Ö¸îÂ·¾¶Ãû£¬½«Õû¸öÂ·¾¶Ãû·ÖÎª¶à¸öÄ¿Â¼Ãû
+// åˆ†å‰²è·¯å¾„åï¼Œå°†æ•´ä¸ªè·¯å¾„ååˆ†ä¸ºå¤šä¸ªç›®å½•å
 vector<string> fileTOOLS::split_dir(string path) {
-	string temp;
-	vector<string> dirs;
-	int pos;
-	while (path.size()) {
-		pos = path.find('/');
-		if (pos == string::npos) {
-			temp = path;
-			path = "";
-		}
-		else {
-			temp = path.substr(0, pos);
-			path = path.substr(pos + 1);
-		}
-		if (temp != "") {
-			dirs.push_back(temp);
-		}
-	}
-	return dirs;
+        string temp;
+        vector<string> dirs;
+        int pos;
+        while (path.size()) {
+                pos = path.find('/');
+                if (pos == string::npos) {
+                        temp = path;
+                        path = "";
+                }
+                else {
+                        temp = path.substr(0, pos);
+                        path = path.substr(pos + 1);
+                }
+                if (temp != "") {
+                        dirs.push_back(temp);
+                }
+        }
+        return dirs;
 }
 
-// ½âÎö¾ø¶ÔÂ·¾¶£¬ÕÒµ½µ±Ç°Ä¿Â¼/ÎÄ¼şµÄÄ¿Â¼Ö¸Õëdir*
+// è§£æç»å¯¹è·¯å¾„ï¼Œæ‰¾åˆ°å½“å‰ç›®å½•/æ–‡ä»¶çš„ç›®å½•æŒ‡é’ˆdir*
 dir* fileTOOLS::analyse_Path(string path) {
-	vector<string> dirs = split_dir(path);
-	dir* son_dir = (dir*)malloc(sizeof(dir) * DIR_FILE_NUM);
-	dir* father_dir = (dir*)malloc(sizeof(dir) * DIR_FILE_NUM);
-	int find_iNode = FileManager::WorkingNo.top();
-	int i;
-	string son, father;
-	vector<string> working_dir;
-	vector<unsigned int> working_no;
+        vector<string> dirs = split_dir(path);
+        dir* son_dir = (dir*)malloc(sizeof(dir) * DIR_FILE_NUM);
+        dir* father_dir = (dir*)malloc(sizeof(dir) * DIR_FILE_NUM);
+        int find_iNode = FileManager::WorkingNo.top();
+        int i;
+        string son, father;
+        vector<string> working_dir;
+        vector<unsigned int> working_no;
 
-	if (path == "") {
-		disk::get_dir(son_dir, &FileManager::iNode_table[FileManager::WorkingNo.top()]);	//·µ»Øµ±Ç°Ä¿Â¼µÄdir####´ÅÅÌ²¿·Ö
-		return son_dir;
-	}
-	else if (path[0] == '/') {// ¾ø¶ÔÂ·¾¶
-		if (dirs[0] != "root") {
-			cout << "ERROR¡ª¡ª´íÎóµÄ¾ø¶ÔÂ·¾¶" << endl;
-			return NULL;
-		}
-		father_dir = FileManager::root_dir;
-		working_dir.push_back("root");
-		working_no.push_back(0);
-		i = 1;
-	}
-	else {//Ïà¶ÔÂ·¾¶
-		father_dir = FileManager::current_dir;
-		i = 0;
-	}
-	for (i; i < dirs.size(); i++) {
-		son = dirs[i];
-		find_iNode = find_son_iNode(son, father_dir);//ÕÒµ½¸¸Ä¿Â¼ÏÂ¶ÔÓ¦×ÓÎÄ¼şiNodeµÄ±êºÅ
-		if (find_iNode == iNode_NUM + 1) {
-			cout << "ERROR¡ª¡ª´íÎóÄ¿Â¼:" << son[i] << endl;
-			return NULL;
-		}
-		if (FileManager::iNode_table[find_iNode].i_mode == 1) {
-			cout << "ERROR¡ª¡ªÕâ²»ÊÇÒ»¸öÄ¿Â¼" << endl;
-			return NULL;
-		}
-		//·µ»ØsonÎÄ¼şµÄdirÎÄ¼şÄ¿Â¼ÏîÊı×éson_dir####´ÅÅÌ²¿·Ö
-		disk::get_dir(son_dir, &FileManager::iNode_table[find_iNode]);
-		father_dir = son_dir;
-		working_dir.push_back(son);
-		working_no.push_back(find_iNode);
-	}
-	FileManager::current_dir = son_dir; //¸üĞÂµ½±íÖĞ
-	if (path[0] == '/') {//¾ø¶ÔÂ·¾¶
-		while (!FileManager::WorkingDir.empty()) {
-			FileManager::WorkingDir.pop();
-			FileManager::WorkingNo.pop();
-		}
-	}
-	for (int i = 0; i < dirs.size(); i++) {
-		FileManager::WorkingDir.push(working_dir[i]);
-		FileManager::WorkingNo.push(working_no[i]);
-	}
-	return FileManager::current_dir;
+        if (path == "") {
+                disk::get_dir(son_dir, &FileManager::iNode_table[FileManager::WorkingNo.top()]);	//è¿”å›å½“å‰ç›®å½•çš„dir####ç£ç›˜éƒ¨åˆ†
+                return son_dir;
+        }
+        else if (path[0] == '/') {// ç»å¯¹è·¯å¾„
+                if (dirs[0] != "root") {
+                        cout << "ERRORâ€”â€”é”™è¯¯çš„ç»å¯¹è·¯å¾„" << endl;
+                        return NULL;
+                }
+                father_dir = FileManager::root_dir;
+                working_dir.push_back("root");
+                working_no.push_back(0);
+                i = 1;
+        }
+        else {//ç›¸å¯¹è·¯å¾„
+                father_dir = FileManager::current_dir;
+                i = 0;
+        }
+        for (i; i < dirs.size(); i++) {
+                son = dirs[i];
+                find_iNode = find_son_iNode(son, father_dir);//æ‰¾åˆ°çˆ¶ç›®å½•ä¸‹å¯¹åº”å­æ–‡ä»¶iNodeçš„æ ‡å·
+                if (find_iNode == iNode_NUM + 1) {
+                        cout << "ERRORâ€”â€”é”™è¯¯ç›®å½•:" << son[i] << endl;
+                        return NULL;
+                }
+                if (FileManager::iNode_table[find_iNode].i_mode == 1) {
+                        cout << "ERRORâ€”â€”è¿™ä¸æ˜¯ä¸€ä¸ªç›®å½•" << endl;
+                        return NULL;
+                }
+                //è¿”å›sonæ–‡ä»¶çš„diræ–‡ä»¶ç›®å½•é¡¹æ•°ç»„son_dir####ç£ç›˜éƒ¨åˆ†
+                disk::get_dir(son_dir, &FileManager::iNode_table[find_iNode]);
+                father_dir = son_dir;
+                working_dir.push_back(son);
+                working_no.push_back(find_iNode);
+        }
+        FileManager::current_dir = son_dir; //æ›´æ–°åˆ°è¡¨ä¸­
+        if (path[0] == '/') {//ç»å¯¹è·¯å¾„
+                while (!FileManager::WorkingDir.empty()) {
+                        FileManager::WorkingDir.pop();
+                        FileManager::WorkingNo.pop();
+                }
+        }
+        for (int i = 0; i < dirs.size(); i++) {
+                FileManager::WorkingDir.push(working_dir[i]);
+                FileManager::WorkingNo.push(working_no[i]);
+        }
+        return FileManager::current_dir;
 }
 
-// ¸ñÊ½»¯Ò»¸öiNode
+// æ ¼å¼åŒ–ä¸€ä¸ªiNode
 void fileTOOLS::format_iNode(iNode* oldiNode) {
-	oldiNode->i_mode = 3;
-	oldiNode->i_size = 0;
-	oldiNode->nlinks = 0;
-	oldiNode->open_num = 0;
-	for (int i = 0; i < FBLK_NUM; i++) {
-		if (oldiNode->block_address[i] < MAX_BLOCK_NUM) {
-			//Èç¹û¿é±»Õ¼ÓÃÔòÊÍ·Å¿é,ĞŞ¸Äbitmap
-			disk::release_block(oldiNode->block_address[i]);//####´ÅÅÌ²¿·Ö
-			oldiNode->block_address[i] = MAX_BLOCK_NUM + 1;
-		}
-		else
-			break;
-	}
+        oldiNode->i_mode = 3;
+        oldiNode->i_size = 0;
+        oldiNode->nlinks = 0;
+        oldiNode->open_num = 0;
+        for (int i = 0; i < FBLK_NUM; i++) {
+                if (oldiNode->block_address[i] < MAX_BLOCK_NUM) {
+                        //å¦‚æœå—è¢«å ç”¨åˆ™é‡Šæ”¾å—,ä¿®æ”¹bitmap
+                        disk::release_block(oldiNode->block_address[i]);//####ç£ç›˜éƒ¨åˆ†
+                        oldiNode->block_address[i] = MAX_BLOCK_NUM + 1;
+                }
+                else
+                        break;
+        }
 }
 
-// É¾³ıÎÄ¼ş
+// åˆ é™¤æ–‡ä»¶
 int fileTOOLS::Delete_File(int f_i) {
-	unsigned int crt_no = (*(FileManager::current_dir + f_i)).iNode_no;
-	iNode crt_inode = FileManager::iNode_table[crt_no];
-	//¸ñÊ½»¯ÒªÉ¾³ıµÄÎÄ¼şµÄiNode
-	format_iNode(FileManager::iNode_table + (*(FileManager::current_dir + f_i)).iNode_no);
-	//µ÷ÕûÒªÉ¾³ıµÄÎÄ¼şµÄËùÔÚÄ¿Â¼£¨ºóÃæµÄÎÄ¼şÇ°ÒÆ£©
-	int j;
-	for (j = f_i; j < DIR_FILE_NUM && (*(FileManager::current_dir + j)).iNode_no != iNode_NUM + 1; j++) {
-		(*(FileManager::current_dir + j)).file_name = (*(FileManager::current_dir + j + 1)).file_name;
-		(*(FileManager::current_dir + j)).iNode_no = (*(FileManager::current_dir + j + 1)).iNode_no;
-	}
-	//buf±£´æµ±Ç°Ä¿Â¼µÄÄÚÈİ
-	char* buf = (char*)malloc(sizeof(dir) * DIR_FILE_NUM);
-	memcpy(buf, FileManager::current_dir, sizeof(dir) * DIR_FILE_NUM);
-	//ÔÚ´ÅÅÌÉÏĞŞ¸Äµ±Ç°Ä¿Â¼ÄÚÈİ
-	FILE* disk_p = fopen(DISK, "rb+");
-	for (int i = 0; i < FBLK_NUM; i++) {
-		fseek(disk_p, crt_inode.block_address[i] * BLOCK_SIZE, SEEK_SET);
-		fwrite((buf + i * BLOCK_SIZE), BLOCK_SIZE, 1, disk_p);
-	}
-	//ÔÚ´ÅÅÌÉÏĞŞ¸ÄiNode±íµÄÄÚÈİ
-	fseek(disk_p, INODE_START * BLOCK_SIZE, SEEK_SET);
-	fwrite(FileManager::iNode_table, sizeof(FileManager::iNode_table), 1, disk_p);
+        unsigned int crt_no = (*(FileManager::current_dir + f_i)).iNode_no;
+        iNode crt_inode = FileManager::iNode_table[crt_no];
+        //æ ¼å¼åŒ–è¦åˆ é™¤çš„æ–‡ä»¶çš„iNode
+        format_iNode(FileManager::iNode_table + (*(FileManager::current_dir + f_i)).iNode_no);
+        //è°ƒæ•´è¦åˆ é™¤çš„æ–‡ä»¶çš„æ‰€åœ¨ç›®å½•ï¼ˆåé¢çš„æ–‡ä»¶å‰ç§»ï¼‰
+        int j;
+        for (j = f_i; j < DIR_FILE_NUM && (*(FileManager::current_dir + j)).iNode_no != iNode_NUM + 1; j++) {
+                (*(FileManager::current_dir + j)).file_name = (*(FileManager::current_dir + j + 1)).file_name;
+                (*(FileManager::current_dir + j)).iNode_no = (*(FileManager::current_dir + j + 1)).iNode_no;
+        }
+        //bufä¿å­˜å½“å‰ç›®å½•çš„å†…å®¹
+        char* buf = (char*)malloc(sizeof(dir) * DIR_FILE_NUM);
+        memcpy(buf, FileManager::current_dir, sizeof(dir) * DIR_FILE_NUM);
+        //åœ¨ç£ç›˜ä¸Šä¿®æ”¹å½“å‰ç›®å½•å†…å®¹
+        FILE* disk_p = fopen(DISK, "rb+");
+        for (int i = 0; i < FBLK_NUM; i++) {
+                fseek(disk_p, crt_inode.block_address[i] * BLOCK_SIZE, SEEK_SET);
+                fwrite((buf + i * BLOCK_SIZE), BLOCK_SIZE, 1, disk_p);
+        }
+        //åœ¨ç£ç›˜ä¸Šä¿®æ”¹iNodeè¡¨çš„å†…å®¹
+        fseek(disk_p, INODE_START * BLOCK_SIZE, SEEK_SET);
+        fwrite(FileManager::iNode_table, sizeof(FileManager::iNode_table), 1, disk_p);
 
-	free(buf);
-	fclose(disk_p);
-	return 1;
+        free(buf);
+        fclose(disk_p);
+        return 1;
 }

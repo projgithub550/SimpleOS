@@ -4,160 +4,160 @@
 #include "file_dir.h"
 using namespace std;
 
-// iNode³õÊ¼»¯º¯Êı 
+// iNodeåˆå§‹åŒ–å‡½æ•°
 void File::init_iNode(iNode* blankiNode) {
-	blankiNode->i_mode = 3;   //Î´¶¨ÒåÎÄ¼şÀàĞÍ
-	blankiNode->i_size = 0;
-	blankiNode->nlinks = 0;
-	blankiNode->open_num = 0;
-	for (int i = 0; i < FBLK_NUM; i++) {
-		if (blankiNode->block_address[i] < MAX_BLOCK_NUM)
-			blankiNode->block_address[i] = MAX_BLOCK_NUM + 1;
-	}
+    blankiNode->i_mode = 3;   //æœªå®šä¹‰æ–‡ä»¶ç±»å‹
+    blankiNode->i_size = 0;
+    blankiNode->nlinks = 0;
+    blankiNode->open_num = 0;
+    for (int i = 0; i < FBLK_NUM; i++) {
+        if (blankiNode->block_address[i] < MAX_BLOCK_NUM)
+            blankiNode->block_address[i] = MAX_BLOCK_NUM + 1;
+    }
 }
 
-// ÍêÉÆĞÂ½¨ÎÄ¼şµÄiNodeĞÅÏ¢
+// å®Œå–„æ–°å»ºæ–‡ä»¶çš„iNodeä¿¡æ¯
 iNode File::Fill_in_iNode(unsigned short f_type) {
-	iNode new_iNode;
-	new_iNode.i_mode = f_type; //0Ä¿Â¼£¬1 txt, 2 exe
-	if (f_type)
-		new_iNode.i_size = 0;//ÆÕÍ¨ÎÄ¼ş´óĞ¡Îª0
-	else
-		new_iNode.i_size = 1;//Ä¿Â¼´óĞ¡Îª1
-	new_iNode.nlinks = 1;
-	new_iNode.open_num = 0;
-	for (int i = 0; i < FBLK_NUM; i++) {
-		new_iNode.block_address[i] = MAX_BLOCK_NUM + 1;
-	}
-	return new_iNode;
+    iNode new_iNode;
+    new_iNode.i_mode = f_type; //0ç›®å½•ï¼Œ1 txt, 2 exe
+    if (f_type)
+        new_iNode.i_size = 0;//æ™®é€šæ–‡ä»¶å¤§å°ä¸º0
+    else
+        new_iNode.i_size = 1;//ç›®å½•å¤§å°ä¸º1
+    new_iNode.nlinks = 1;
+    new_iNode.open_num = 0;
+    for (int i = 0; i < FBLK_NUM; i++) {
+        new_iNode.block_address[i] = MAX_BLOCK_NUM + 1;
+    }
+    return new_iNode;
 }
 
-// ´´½¨ÎÄ¼ş¡ª¡ª¡ª¡ªCreate_File(filename, 0/1);
+// åˆ›å»ºæ–‡ä»¶â€”â€”â€”â€”Create_File(filename, 0/1);
 iNode* File::Create_File(string filename, unsigned short f_type) {
-	dir* item;
-	int cur_i_no;
-	if (filename[0] != '/') {
-		if (!FileManager::current_dir) {
-			cout << "ERROR¡ª¡ªµ±Ç°Ä¿Â¼·¢Éú´íÎó" << endl;
-			return NULL;
-		}
-		item = FileManager::current_dir;
-		cur_i_no = FileManager::WorkingNo.top();
-	}
-	else {	//ÎÄ¼şÃûÆğÊ¼·ûÎª/£¬²»ºÏ·¨
-		cout << "ERROR¡ª¡ªÎÄ¼şÃû²»ºÏ·¨" << endl;
-		return NULL;
-	}
-	//ÅĞ¶ÏÎÄ¼şÃû³¤¶ÈÊÇ·ñºÏ·¨
-	if (filename.length() > Name_length) {
-		cout << "ERROR¡ª¡ªÎÄ¼şÃû³¤¶È¹ı³¤" << endl;
-		return NULL;
-	}
-	//ÅĞ¶ÏÊÇ·ñ´æÔÚÍ¬ÃûµÄÎÄ¼ş
-	if (fileTOOLS::same_name(filename, item)) {
-		cout << "ERROR¡ª¡ªÎÄ¼şÒÑ¾­´æÔÚ" << endl;
-		return NULL;
-	}
-	//´´½¨ÎÄ¼şÄ¿Â¼Ïî£¬·ÅÔÚÎÄ¼şËùÔÚµÄÄ¿Â¼µÄdirectoryÁĞ±íÖĞ 
-	int i;
-	for (i = 0; i < DIR_FILE_NUM && (*(item + i)).iNode_no != iNode_NUM + 1; i++) {} //ÕÒµ½itemµÄÎ²Ïî
-	if (i == DIR_FILE_NUM) {
-		cout << "ERROR¡ª¡ªµ±Ç°Ä¿Â¼ÏÂÎÄ¼şÈİÁ¿ÒÑÂú" << endl;
-		return NULL;
-	}
-	unsigned int temp_no = 0;
-	int x;	//²éÕÒ¿ÕµÄi½Úµã
-	for (x = 0; x < iNode_NUM; x++)
-		if (FileManager::iNode_table[x].nlinks == 0) {
-			temp_no = x;
-			break;
-		}
-	if (x == iNode_NUM) {
-		cout << "ERROR¡ª¡ªÃ»ÓĞ¿ÉÓÃµÄi½Úµã" << endl;
-		return NULL;
-	}
-	else { //ÔÚµ±Ç°Ä¿Â¼Êı×éÎ²ÏîÌí¼ÓÎÄ¼şÄ¿Â¼Ïî  	
-		(*(item + i)).file_name = filename;
-		(*(item + i)).iNode_no = temp_no;
-	}
-	//ÍêÉÆiNode½ÚµãĞÅÏ¢,²¢½«iNode½Úµã·ÅÔÚiNode tableÖĞ  
-	iNode newiNode = Fill_in_iNode(f_type);
-	if (f_type == 0) { //f_typeÎª0Ê±ËµÃ÷´´½¨Ä¿Â¼ÎÄ¼ş
-		dir temp_dir[DIR_FILE_NUM];
-		DIR::init_dir(temp_dir); //³õÊ¼»¯dir
-		FILE* disk_p = fopen(DISK, "rb+");
-		int blk_addr;
-		//µ±Ç°Çé¿öÏÂÒ»¸öÄ¿Â¼Õ¼ËÄ¸öblock
-		dir* tmp_buf = temp_dir;
-		for (int k = 0; k < FBLK_NUM; k++) {
-			blk_addr = disk::first_free();//Ã¿´Î´Ó´ÅÅÌÉÏÕÒÒ»¸ö¿Õ¼ä####´ÅÅÌ²¿·Ö
-			newiNode.block_address[k] = blk_addr;
-			fseek(disk_p, blk_addr * BLOCK_SIZE, SEEK_SET);//ÔÚ´ÅÅÌÉÏĞ´ÏÂÏàÓ¦ĞÅÏ¢
-			fwrite(((char*)tmp_buf + k * BLOCK_SIZE), BLOCK_SIZE, 1, disk_p);
-		}
-		fclose(disk_p);
-	}
-	FileManager::iNode_table[(*(item + i)).iNode_no] = newiNode;
-	//ÔÚ´ÅÅÌÉÏĞ´ÏÂÏàÓ¦ĞÅÏ¢£¬FileManager::iNode_table¸üĞÂ£¬itemËùÖ¸µÄÄ¿Â¼½øĞĞ¸üĞÂ(ÀûÓÃcur_iNode)
-	FILE* disk_p = fopen(DISK, "rb+");
-	fseek(disk_p, INODE_START * BLOCK_SIZE, SEEK_SET); //ÎÄ¼şÖ¸Õë¶¨Î»ÖÁinode_table´¦
-	fwrite(FileManager::iNode_table, sizeof(FileManager::iNode_table), 1, disk_p); //iNode_table¸üĞÂ
-	//µ±Ç°Ä¿Â¼ÏÂµÄÄ¿Â¼ĞÅÏ¢Ğ´»Ø´ÅÅÌ
-	char* buf = (char*)item;
-	for (int k = 0; k < FBLK_NUM; k++) {
-		fseek(disk_p, FileManager::iNode_table[cur_i_no].block_address[k] * BLOCK_SIZE, SEEK_SET);
-		fwrite((buf + k * BLOCK_SIZE), BLOCK_SIZE, 1, disk_p);
-	}
-	fclose(disk_p);
-	return &newiNode;
+    dir* item;
+    int cur_i_no;
+    if (filename[0] != '/') {
+        if (!FileManager::current_dir) {
+            cout << "ERRORâ€”â€”å½“å‰ç›®å½•å‘ç”Ÿé”™è¯¯" << endl;
+            return NULL;
+        }
+        item = FileManager::current_dir;
+        cur_i_no = FileManager::WorkingNo.top();
+    }
+    else {	//æ–‡ä»¶åèµ·å§‹ç¬¦ä¸º/ï¼Œä¸åˆæ³•
+        cout << "ERRORâ€”â€”æ–‡ä»¶åä¸åˆæ³•" << endl;
+        return NULL;
+    }
+    //åˆ¤æ–­æ–‡ä»¶åé•¿åº¦æ˜¯å¦åˆæ³•
+    if (filename.length() > Name_length) {
+        cout << "ERRORâ€”â€”æ–‡ä»¶åé•¿åº¦è¿‡é•¿" << endl;
+        return NULL;
+    }
+    //åˆ¤æ–­æ˜¯å¦å­˜åœ¨åŒåçš„æ–‡ä»¶
+    if (fileTOOLS::same_name(filename, item)) {
+        cout << "ERRORâ€”â€”æ–‡ä»¶å·²ç»å­˜åœ¨" << endl;
+        return NULL;
+    }
+    //åˆ›å»ºæ–‡ä»¶ç›®å½•é¡¹ï¼Œæ”¾åœ¨æ–‡ä»¶æ‰€åœ¨çš„ç›®å½•çš„directoryåˆ—è¡¨ä¸­
+    int i;
+    for (i = 0; i < DIR_FILE_NUM && (*(item + i)).iNode_no != iNode_NUM + 1; i++) {} //æ‰¾åˆ°itemçš„å°¾é¡¹
+    if (i == DIR_FILE_NUM) {
+        cout << "ERRORâ€”â€”å½“å‰ç›®å½•ä¸‹æ–‡ä»¶å®¹é‡å·²æ»¡" << endl;
+        return NULL;
+    }
+    unsigned int temp_no = 0;
+    int x;	//æŸ¥æ‰¾ç©ºçš„ièŠ‚ç‚¹
+    for (x = 0; x < iNode_NUM; x++)
+        if (FileManager::iNode_table[x].nlinks == 0) {
+            temp_no = x;
+            break;
+        }
+    if (x == iNode_NUM) {
+        cout << "ERRORâ€”â€”æ²¡æœ‰å¯ç”¨çš„ièŠ‚ç‚¹" << endl;
+        return NULL;
+    }
+    else { //åœ¨å½“å‰ç›®å½•æ•°ç»„å°¾é¡¹æ·»åŠ æ–‡ä»¶ç›®å½•é¡¹
+        (*(item + i)).file_name = filename;
+        (*(item + i)).iNode_no = temp_no;
+    }
+    //å®Œå–„iNodeèŠ‚ç‚¹ä¿¡æ¯,å¹¶å°†iNodeèŠ‚ç‚¹æ”¾åœ¨iNode tableä¸­
+    iNode newiNode = Fill_in_iNode(f_type);
+    if (f_type == 0) { //f_typeä¸º0æ—¶è¯´æ˜åˆ›å»ºç›®å½•æ–‡ä»¶
+        dir temp_dir[DIR_FILE_NUM];
+        DIR::init_dir(temp_dir); //åˆå§‹åŒ–dir
+        FILE* disk_p = fopen(DISK, "rb+");
+        int blk_addr;
+        //å½“å‰æƒ…å†µä¸‹ä¸€ä¸ªç›®å½•å å››ä¸ªblock
+        dir* tmp_buf = temp_dir;
+        for (int k = 0; k < FBLK_NUM; k++) {
+            blk_addr = disk::first_free();//æ¯æ¬¡ä»ç£ç›˜ä¸Šæ‰¾ä¸€ä¸ªç©ºé—´####ç£ç›˜éƒ¨åˆ†
+            newiNode.block_address[k] = blk_addr;
+            fseek(disk_p, blk_addr * BLOCK_SIZE, SEEK_SET);//åœ¨ç£ç›˜ä¸Šå†™ä¸‹ç›¸åº”ä¿¡æ¯
+            fwrite(((char*)tmp_buf + k * BLOCK_SIZE), BLOCK_SIZE, 1, disk_p);
+        }
+        fclose(disk_p);
+    }
+    FileManager::iNode_table[(*(item + i)).iNode_no] = newiNode;
+    //åœ¨ç£ç›˜ä¸Šå†™ä¸‹ç›¸åº”ä¿¡æ¯ï¼ŒFileManager::iNode_tableæ›´æ–°ï¼Œitemæ‰€æŒ‡çš„ç›®å½•è¿›è¡Œæ›´æ–°(åˆ©ç”¨cur_iNode)
+    FILE* disk_p = fopen(DISK, "rb+");
+    fseek(disk_p, INODE_START * BLOCK_SIZE, SEEK_SET); //æ–‡ä»¶æŒ‡é’ˆå®šä½è‡³inode_tableå¤„
+    fwrite(FileManager::iNode_table, sizeof(FileManager::iNode_table), 1, disk_p); //iNode_tableæ›´æ–°
+    //å½“å‰ç›®å½•ä¸‹çš„ç›®å½•ä¿¡æ¯å†™å›ç£ç›˜
+    char* buf = (char*)item;
+    for (int k = 0; k < FBLK_NUM; k++) {
+        fseek(disk_p, FileManager::iNode_table[cur_i_no].block_address[k] * BLOCK_SIZE, SEEK_SET);
+        fwrite((buf + k * BLOCK_SIZE), BLOCK_SIZE, 1, disk_p);
+    }
+    fclose(disk_p);
+    return &newiNode;
 }
 
-// ´ò¿ªÎÄ¼ş¡ª¡ª¡ª¡ªOpen_File(filename);
-// ¸ù¾İÎÄ¼şÃû¶¨Î»µ½ÆäiNode£¬ĞŞ¸Äopen_num£¬´´½¨ÎÄ¼ş¾ä±úos_file 
+// æ‰“å¼€æ–‡ä»¶â€”â€”â€”â€”Open_File(filename);
+// æ ¹æ®æ–‡ä»¶åå®šä½åˆ°å…¶iNodeï¼Œä¿®æ”¹open_numï¼Œåˆ›å»ºæ–‡ä»¶å¥æŸ„os_file
 os_file* File::Open_File(string f_name) {
-	os_file* current_file = (os_file*)malloc(sizeof(os_file));
-	dir* current = FileManager::current_dir;//µ±Ç°ËùÔÚÄ¿Â¼µÄdir*Êı×é
-	if (!current) {
-		cout << "ERROR¡ª¡ªµ±Ç°Â·¾¶³ö´í" << endl;
-		return NULL;
-	}
-	unsigned int x = fileTOOLS::find_son_iNode(f_name, current);
-	if (x == iNode_NUM + 1) {
-		cout << "ERROR¡ª¡ªµ±Ç°Ä¿Â¼ÏÂÕÒ²»µ½¸ÃÎÄ¼ş" << endl;
-		return NULL;
-	}
-	current_file->f_iNode = FileManager::iNode_table + x;
-	//ÅĞ¶ÏÊÇ·ñÒÑ¾­´ò¿ª
-	if (current_file->f_iNode->open_num == 1) {
-		cout << "ERROR¡ª¡ªÎÄ¼şÒÑ¾­±»´ò¿ª" << endl;
-		return NULL;
-	}
-	current_file->f_pos = 0; //¶ÁÖ¸ÕëÖÃ0
-	current_file->f_iNode->open_num = 1; //´ò¿ªÎÄ¼ş£¬ÖÃ1 
-	FileManager::WorkingDir.push(f_name);
-	FileManager::WorkingNo.push(x);
-	return current_file;
+    os_file* current_file = (os_file*)malloc(sizeof(os_file));
+    dir* current = FileManager::current_dir;//å½“å‰æ‰€åœ¨ç›®å½•çš„dir*æ•°ç»„
+    if (!current) {
+        cout << "ERRORâ€”â€”å½“å‰è·¯å¾„å‡ºé”™" << endl;
+        return NULL;
+    }
+    unsigned int x = fileTOOLS::find_son_iNode(f_name, current);
+    if (x == iNode_NUM + 1) {
+        cout << "ERRORâ€”â€”å½“å‰ç›®å½•ä¸‹æ‰¾ä¸åˆ°è¯¥æ–‡ä»¶" << endl;
+        return NULL;
+    }
+    current_file->f_iNode = FileManager::iNode_table + x;
+    //åˆ¤æ–­æ˜¯å¦å·²ç»æ‰“å¼€
+    if (current_file->f_iNode->open_num == 1) {
+        cout << "ERRORâ€”â€”æ–‡ä»¶å·²ç»è¢«æ‰“å¼€" << endl;
+        return NULL;
+    }
+    current_file->f_pos = 0; //è¯»æŒ‡é’ˆç½®0
+    current_file->f_iNode->open_num = 1; //æ‰“å¼€æ–‡ä»¶ï¼Œç½®1
+    FileManager::WorkingDir.push(f_name);
+    FileManager::WorkingNo.push(x);
+    return current_file;
 }
 
-// ¹Ø±ÕÎÄ¼ş£ºĞŞ¸Äopen_num²¢ÊÍ·Å¾ä±ú¡ª¡ª¡ª¡ªClose_File(fp);
+// å…³é—­æ–‡ä»¶ï¼šä¿®æ”¹open_numå¹¶é‡Šæ”¾å¥æŸ„â€”â€”â€”â€”Close_File(fp);
 void File::Close_File(os_file* f) {
-	FileManager::WorkingDir.pop();
-	FileManager::WorkingNo.pop();
-	f->f_iNode->open_num = 0;
-	f->f_pos = 0;
-	free(f);
+    FileManager::WorkingDir.pop();
+    FileManager::WorkingNo.pop();
+    f->f_iNode->open_num = 0;
+    f->f_pos = 0;
+    free(f);
 }
 
-// É¾³ıÆÕÍ¨ÎÄ¼ş¡ª¡ª¡ª¡ªos_rm(filename);
+// åˆ é™¤æ™®é€šæ–‡ä»¶â€”â€”â€”â€”os_rm(filename);
 int File::os_rm(string f_name) {
-	int f_i = fileTOOLS::find_son_pos(f_name); //ÕÒµ½ÁËÒªÉ¾³ıµÄÎÄ¼şÄ¿Â¼Ïî 
-	if (f_i == DIR_FILE_NUM + 1) {
-		cout << "ERROR¡ª¡ª²»¿ÉÉ¾³ı¸ÃÎÄ¼ş" << endl;
-		return 0;// Ê§°Ü 
-	}
-	if (FileManager::iNode_table[(*(FileManager::current_dir + f_i)).iNode_no].i_mode == 0) {
-		cout << "ERROR¡ª¡ª¸ÃÎÄ¼şÎªÄ¿Â¼ÎÄ¼ş" << endl;
-		return 0; //Ä¿Â¼ÎÄ¼ş£¬´íÎó
-	}
-	return fileTOOLS::Delete_File(f_i); //É¾³ıÎÄ¼ş
+    int f_i = fileTOOLS::find_son_pos(f_name); //æ‰¾åˆ°äº†è¦åˆ é™¤çš„æ–‡ä»¶ç›®å½•é¡¹
+    if (f_i == DIR_FILE_NUM + 1) {
+        cout << "ERRORâ€”â€”ä¸å¯åˆ é™¤è¯¥æ–‡ä»¶" << endl;
+        return 0;// å¤±è´¥
+    }
+    if (FileManager::iNode_table[(*(FileManager::current_dir + f_i)).iNode_no].i_mode == 0) {
+        cout << "ERRORâ€”â€”è¯¥æ–‡ä»¶ä¸ºç›®å½•æ–‡ä»¶" << endl;
+        return 0; //ç›®å½•æ–‡ä»¶ï¼Œé”™è¯¯
+    }
+    return fileTOOLS::Delete_File(f_i); //åˆ é™¤æ–‡ä»¶
 }

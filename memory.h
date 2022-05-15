@@ -5,17 +5,6 @@
 #include <cmath>
 using namespace std;
 
-#define Memory "memory.bin"		//定义模拟磁盘文件
-#define Physical_blocks_Not_exist -3
-#define disk_Not_exist -2
-#define invalid_value -1
-#define Valid 1
-
-#define page_size 1024//页大小
-#define occupancy 32 //页表实际占用的页
-#define max_page_number 64 //虚拟页表最多含有的页
-#define q_max_page_number 16 //快表最多含有的页
-#define schedule_queue_length 16 //调度队列
 
 class page_table//每一个进程对应一个页表，页表中存有进程分配的页号和对应的物理块号 
 {
@@ -45,8 +34,8 @@ class quick_page_table//快表
 class MemoryManager
 {
     public:
-        map<int,page_table>page_tables; //主键进程号，值对应放入进程对应的页表
-        map<int,int>Physical_memory;//物理页以及对应的内存
+        map<int,page_table> page_tables; //主键进程号，值对应放入进程对应的页表
+        map<int,int> Physical_memory;//物理页以及对应的内存
 
         string schedule;
         int cur_aid = 0;  // 记录分配次数            
@@ -56,6 +45,7 @@ class MemoryManager
         int page_fault = 0;
         int page_embed = 0;
         quick_page_table q_page_table;
+        page_table pTable;
 
         MemoryManager();
         int page_allocation(int pid,int exe_size,char buff[]);//进程号，大小，内容

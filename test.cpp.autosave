@@ -9,20 +9,22 @@
 #include "file_dir.h"
 using namespace std;
 
-bool isExit;
-bool debug;
+bool debug;		// æ–‡ä»¶å†…éƒ¨æµ‹è¯•æ—¶æ‰€ç”¨ï¼Œdebug = 1ï¼Œåˆ™æ¸…ç©ºrootä¸‹æ‰€æœ‰å·²å­˜åœ¨çš„æ–‡ä»¶å†é‡æ–°å¼€å§‹
+// debug = 0,åˆ™ä¸æ¸…ç©ºrootä¸‹æ‰€æœ‰æ–‡ä»¶ï¼Œè‹¥è¦åˆ é™¤debug,åˆ™è¦åˆ é™¤disk::start_disk()å‡½æ•°ä¸­çš„æ¡ä»¶è¯­å¥
+				
+
+bool isExit;	//	æ–‡ä»¶å†…éƒ¨æµ‹è¯•æ‰€ç”¨ï¼Œä¹‹åå¯ä»¥åˆ æ‰ã€‚
 
 
 void FileManager::InitFileSys() {
-	/*  Ê×ÏÈ¼¤»î´ÅÅÌ£¨°üÀ¨¸ñÊ½»¯ºÍ³õÊ¼»¯£©
-	/*  ´ÅÅÌ¸ñÊ½»¯Ê±»á½¨Á¢Ä£Äâ´ÅÅÌÎÄ¼ş
-	/*  ´ÅÅÌ³õÊ¼»¯Ê±»á³õÊ¼»¯³¬¼¶¿é¡¢³õÊ¼»¯iNode±í¡¢³õÊ¼»¯Î»Í¼¡¢³õÊ¼»¯Ä¿Â¼±í£¬×îºóĞ´Èë´ÅÅÌ   */
-	debug = 0;	// debug = 1 Ê±Ã¿´ÎÆô¶¯³õÊ¼»¯´ÅÅÌ
+	/*  é¦–å…ˆæ¿€æ´»ç£ç›˜ï¼ˆåŒ…æ‹¬æ ¼å¼åŒ–å’Œåˆå§‹åŒ–ï¼‰
+	/*  ç£ç›˜æ ¼å¼åŒ–æ—¶ä¼šå»ºç«‹æ¨¡æ‹Ÿç£ç›˜æ–‡ä»¶
+	/*  ç£ç›˜åˆå§‹åŒ–æ—¶ä¼šåˆå§‹åŒ–è¶…çº§å—ã€åˆå§‹åŒ–iNodeè¡¨ã€åˆå§‹åŒ–ä½å›¾ã€åˆå§‹åŒ–ç›®å½•è¡¨ï¼Œæœ€åå†™å…¥ç£ç›˜   */
+	debug = 0;	// debug = 1 æ—¶æ¯æ¬¡å¯åŠ¨åˆå§‹åŒ–ç£ç›˜
 	disk::start_disk();
-	/*  ³õÊ¼»¯µ±Ç°¹¤×÷»·¾³  */
-	WorkingDir.push("root"); // µ±Ç°¹¤×÷Ä¿Â¼ÎªrootÖ®ÏÂ
-	WorkingNo.push(0);  //  rootÄ¿Â¼µÄi½ÚµãºÅÎª0
-	isExit = false;
+	/*  åˆå§‹åŒ–å½“å‰å·¥ä½œç¯å¢ƒ  */
+	WorkingDir.push("root"); // å½“å‰å·¥ä½œç›®å½•ä¸ºrootä¹‹ä¸‹
+	WorkingNo.push(0);  //  rootç›®å½•çš„ièŠ‚ç‚¹å·ä¸º0
 }
 
 //vector<pair<string, unsigned short>> 
@@ -34,11 +36,11 @@ void FileManager::InitFileSys() {
 	while (it != fileList.end()) {
 		cout << "  ";
 		if ((*it).second == 0)
-			cout << left <<  setw(9) << "DIR £º";
+			cout << left <<  setw(9) << "DIR ï¼š";
 		else if (it->second == 1)
-			cout << left << setw(9) << "TXT £º";
+			cout << left << setw(9) << "TXT ï¼š";
 		else if(it->second == 2){
-			cout << left << setw(9) << "EXE £º";
+			cout << left << setw(9) << "EXE ï¼š";
 		}
 		else {
 			cout << "FILETYPE ERROR" << it->first << endl;
@@ -51,15 +53,15 @@ void FileManager::InitFileSys() {
 
 }
 
-string FileManager::pwd() {	//	ÏÔÊ¾µ±Ç°ËùÔÚÂ·¾¶
+string FileManager::pwd() {	//	æ˜¾ç¤ºå½“å‰æ‰€åœ¨è·¯å¾„
 	return displayPath(1);
 }
 
-bool FileManager::cd(string dirname) {//	³É¹¦·µ»Ø 1£¬²»³É¹¦·µ»Ø 0
+bool FileManager::cd(string dirname) {//	æˆåŠŸè¿”å› 1ï¼Œä¸æˆåŠŸè¿”å› 0
 	return DIR::os_cd(dirname);
 }
 
-bool FileManager::cat(string filename){	//	´ò¿ªtxtÎÄ¼ş£¬²¢´òÓ¡ÏÔÊ¾
+bool FileManager::cat(string filename){	//	æ‰“å¼€txtæ–‡ä»¶ï¼Œå¹¶æ‰“å°æ˜¾ç¤º
 	os_file* fp = File::Open_File(filename);
 	if (!fp){
 		cout << "open file error\n" << endl;
@@ -78,14 +80,14 @@ bool FileManager::cat(string filename){	//	´ò¿ªtxtÎÄ¼ş£¬²¢´òÓ¡ÏÔÊ¾
 	return false;
 }
 
-bool FileManager::mkdir(string dirname) {//	³É¹¦·µ»Ø 1£¬²»³É¹¦·µ»Ø 0
+bool FileManager::mkdir(string dirname) {//	æˆåŠŸè¿”å› 1ï¼Œä¸æˆåŠŸè¿”å› 0
 	if (!File::Create_File(dirname, 0))
 		return false;
 	else
 		return true;
 }
 
-bool FileManager::mkfile(string filename, unsigned short filetype) {//	³É¹¦·µ»Ø T£¬²»³É¹¦·µ»Ø F
+bool FileManager::mkfile(string filename, unsigned short filetype) {//	æˆåŠŸè¿”å› Tï¼Œä¸æˆåŠŸè¿”å› F
 	if (!File::Create_File(filename, filetype))
 		return false;
 
@@ -107,11 +109,11 @@ bool FileManager::mkfile(string filename, unsigned short filetype) {//	³É¹¦·µ»Ø 
 	}
 }
 
-bool FileManager::rmdir(string dirname) {//	³É¹¦·µ»Ø 1£¬²»³É¹¦·µ»Ø 0
+bool FileManager::rmdir(string dirname) {//	æˆåŠŸè¿”å› 1ï¼Œä¸æˆåŠŸè¿”å› 0
 	return DIR::os_rmdir(dirname);
 }
 
-bool FileManager::rmfile(string filename) {//	³É¹¦·µ»Ø 1£¬²»³É¹¦·µ»Ø 0
+bool FileManager::rmfile(string filename) {//	æˆåŠŸè¿”å› 1ï¼Œä¸æˆåŠŸè¿”å› 0
 	if (File::os_rm(filename))
 		return true;
 	else
@@ -126,6 +128,7 @@ int FileManager::openFile(string filename) {
 	NumOfFile[num] = address;
 	return num;
 }
+
 void FileManager::closeFile(int filenum) {
 	unsigned long int address = NumOfFile[filenum];
 	NumOfFile.erase(filenum);
@@ -135,7 +138,7 @@ void FileManager::closeFile(int filenum) {
 unsigned short FileManager::getFileType(string filename) {
 	vector<pair<string, unsigned short>> fileList = DIR::os_ls();
 	vector<pair<string, unsigned short>>::iterator it = fileList.begin();
-	unsigned short f_type = 3;	// Î´ÖªÀàĞÍ
+	unsigned short f_type = 3;	// æœªçŸ¥ç±»å‹
 	while (it != fileList.end()) {
 		if (it->first == filename) {
 			f_type = it->second;
@@ -146,17 +149,38 @@ unsigned short FileManager::getFileType(string filename) {
 	return f_type;
 }
 
+int FileManager::readfile(int filenum, int size, void* v_buf)//é¢å‘è¿›ç¨‹çš„è¯»æ–‡ä»¶æ¥å£
+{
+	os_file* fp = (os_file*)NumOfFile[filenum];
+	return disk::os_readfile(v_buf, size, fp);
+}
+
+int FileManager::writefile(int filenum, int size, void* v_buf)//é¢å‘è¿›ç¨‹çš„å†™æ–‡ä»¶æ¥å£
+{
+	os_file* fp = (os_file*)NumOfFile[filenum];
+	return disk::os_writefile(v_buf, size, fp);
+
+}
+
+bool FileManager::readBlock(long block, char* buf)//ç£ç›˜å—å†™å…¥å†…å­˜
+{
+    
+}
+bool FileManager::writeBlock(long block, char* buf);//å†…å­˜å†™å…¥ç£ç›˜å—
+{
+
+}
 
 
 
 
-
+/* è¯¥å‡½æ•°ä¸ºæ–‡ä»¶å†…éƒ¨æµ‹è¯•æ‰€ç”¨çš„å‡½æ•° */
 string FileManager::trim(string str) {
 	str.erase(0, str.find_first_not_of(" "));
 	str.erase(str.find_last_not_of(" ") + 1);
 	return str;
 }
-
+/* è¯¥å‡½æ•°ä¸ºæ–‡ä»¶å†…éƒ¨æµ‹è¯•æ‰€ç”¨çš„å‡½æ•° */
 string FileManager::displayPath(int flag) {
 	stack<string> tempdir(WorkingDir);
 	vector<string> temppath;
@@ -176,7 +200,7 @@ string FileManager::displayPath(int flag) {
 	else
 		return path;
 }
-
+/* è¯¥å‡½æ•°ä¸ºæ–‡ä»¶å†…éƒ¨æµ‹è¯•æ‰€ç”¨çš„å‡½æ•° */
 void FileManager::InputAnalyse(vector<string> args){
 	int inPos = 0;
 
@@ -239,11 +263,11 @@ void FileManager::InputAnalyse(vector<string> args){
 			string tmp;
 			string filename;
 			while (!(filetype == 1 || filetype == 2)) {
-				cout << "Ñ¡ÔñÄãÒª´´½¨µÄÎÄ¼şÀàĞÍ£º1.txt 2.exe" << endl;
+				cout << "é€‰æ‹©ä½ è¦åˆ›å»ºçš„æ–‡ä»¶ç±»å‹ï¼š1.txt 2.exe" << endl;
 				getline(cin, tmp);
 				filetype = atoi(tmp.c_str());
 			}
-			cout << "ÊäÈëÄãÒª´´½¨µÄÎÄ¼şÃû³Æ£º";
+			cout << "è¾“å…¥ä½ è¦åˆ›å»ºçš„æ–‡ä»¶åç§°ï¼š";
 			getline(cin, filename);
 			if (FileManager::mkfile(filename, filetype))
 				cout << "mkfile successfully\n";
@@ -259,6 +283,7 @@ void FileManager::InputAnalyse(vector<string> args){
 	}
 }
 
+/* è¯¥å‡½æ•°ä¸ºæ–‡ä»¶å†…éƒ¨æµ‹è¯•æ‰€ç”¨çš„å‡½æ•° */
 void FileManager::InputCut(string input){
 	stringstream stream;
 	stream << input;
@@ -271,6 +296,7 @@ void FileManager::InputCut(string input){
 	InputAnalyse(argv);
 }
 
+/* è¯¥å‡½æ•°ä¸ºæ–‡ä»¶å†…éƒ¨æµ‹è¯•æ‰€ç”¨çš„å‡½æ•° */
 void FileManager::waitForInput(){
 	char tmp[256];
 	displayPath(0);
@@ -283,20 +309,22 @@ void FileManager::waitForInput(){
 		InputCut(tmpStr);
 }
 
-iNode FileManager::iNode_table[iNode_NUM];  //iNode tableµÄÊı×é£¬Êı×éÏÂ±ê¶ÔÓ¦iNode±àºÅ
-dir FileManager::root_dir[MAX_FILE_NUM];    //¸ùÄ¿Â¼ Êı×éÊµÏÖ  ÍùÏÂµÄÃ¿¸ö×ÓÄ¿Â¼Ò²ÊÇdirÀàĞÍµÄÊı×é£¬Ã¿Ò»ÏîÊÇÒ»¸öÎÄ¼şÄ¿Â¼Ïî
-dir* FileManager::current_dir;				//±£´æÃ¿´Î¸üĞÂanalyse_path·µ»ØµÄdirÊı×é£¬¼´µ±Ç°Ä¿Â¼µÄdirÊı×é
-stack<string> FileManager::WorkingDir;		//¼ÇÂ¼Â·¾¶Ãû³Æ
-stack<unsigned int> FileManager::WorkingNo; //¼ÇÂ¼Â·¾¶ÉÏi½ÚµãµÄ±êºÅ
+iNode FileManager::iNode_table[iNode_NUM];  //iNode tableçš„æ•°ç»„ï¼Œæ•°ç»„ä¸‹æ ‡å¯¹åº”iNodeç¼–å·
+dir FileManager::root_dir[MAX_FILE_NUM];    //æ ¹ç›®å½• æ•°ç»„å®ç°  å¾€ä¸‹çš„æ¯ä¸ªå­ç›®å½•ä¹Ÿæ˜¯dirç±»å‹çš„æ•°ç»„ï¼Œæ¯ä¸€é¡¹æ˜¯ä¸€ä¸ªæ–‡ä»¶ç›®å½•é¡¹
+dir* FileManager::current_dir;				//ä¿å­˜æ¯æ¬¡æ›´æ–°analyse_pathè¿”å›çš„diræ•°ç»„ï¼Œå³å½“å‰ç›®å½•çš„diræ•°ç»„
+stack<string> FileManager::WorkingDir;		//è®°å½•è·¯å¾„åç§°
+stack<unsigned int> FileManager::WorkingNo; //è®°å½•è·¯å¾„ä¸ŠièŠ‚ç‚¹çš„æ ‡å·
 map<int, unsigned long int> FileManager::NumOfFile;
 
+/* mainå‡½æ•°ä¸ºæ–‡ä»¶å†…éƒ¨æµ‹è¯•æ‰€ç”¨çš„å‡½æ•° */
 int main() {
-	/*  ³õÊ¼»¯µ±Ç°¹¤×÷»·¾³  */
-	/*  Ê×ÏÈ¼¤»î´ÅÅÌ£¨°üÀ¨¸ñÊ½»¯ºÍ³õÊ¼»¯£©
-	/*  ´ÅÅÌ¸ñÊ½»¯Ê±»á½¨Á¢Ä£Äâ´ÅÅÌÎÄ¼ş
-	/*  ´ÅÅÌ³õÊ¼»¯Ê±»á³õÊ¼»¯³¬¼¶¿é¡¢³õÊ¼»¯iNode±í¡¢³õÊ¼»¯Î»Í¼¡¢³õÊ¼»¯Ä¿Â¼±í£¬×îºóĞ´Èë´ÅÅÌ   */
+	/*  åˆå§‹åŒ–å½“å‰å·¥ä½œç¯å¢ƒ  */
+	/*  é¦–å…ˆæ¿€æ´»ç£ç›˜ï¼ˆåŒ…æ‹¬æ ¼å¼åŒ–å’Œåˆå§‹åŒ–ï¼‰
+	/*  ç£ç›˜æ ¼å¼åŒ–æ—¶ä¼šå»ºç«‹æ¨¡æ‹Ÿç£ç›˜æ–‡ä»¶
+	/*  ç£ç›˜åˆå§‹åŒ–æ—¶ä¼šåˆå§‹åŒ–è¶…çº§å—ã€åˆå§‹åŒ–iNodeè¡¨ã€åˆå§‹åŒ–ä½å›¾ã€åˆå§‹åŒ–ç›®å½•è¡¨ï¼Œæœ€åå†™å…¥ç£ç›˜   */
 	FileManager::InitFileSys();
+	isExit = false;
 	while (!isExit)
-		FileManager::waitForInput(); //  ¿ªÊ¼µÈ´ıÓÃ»§ÊäÈë
+		FileManager::waitForInput(); //  å¼€å§‹ç­‰å¾…ç”¨æˆ·è¾“å…¥
 	return 0;
 }

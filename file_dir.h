@@ -6,20 +6,7 @@
 #include <malloc.h>
 using namespace std;
 
-#define BLOCK_SIZE 1024		//磁盘块大小\数据块大小 64字节#####改成了1024
-#define MAX_FILE_NUM 256	//最大文件数量，也是最大inode的数量
-#define MAX_BLOCK_NUM 1024	//最大磁盘块数量，即磁盘总容量
-#define MAX_FILE_SIZE 256	//最大文件长度，256字节，占四个磁盘块
-#define INODE_START 1		//inode区起始块号，0为第一块,为超级块块号
-#define BITMAP_START 129	//bitmap区起始块号（inode区占256*32B，占128个块
-#define DATA_START (BITMAP_START + (sizeof(char)*MAX_BLOCK_NUM)/BLOCK_SIZE) //data区起始块号 (bitmap区起始块号加位图占用块数
-#define DISK "disk.bin"		//定义模拟磁盘文件
-#define Name_length 14		//文件名称最大长度
-#define iNode_NUM 256		//iNode的数量
-#define DIR_FILE_NUM 8		//每个目录文件下的文件最大个数
-#define MAX_DIR_DEPTH 256	//限制最大的目录深度
-#define PATH_LENGTH 100		//路径字符串最大长度
-#define FBLK_NUM 4			//文件中block的个数
+
 
 extern bool debug;
 
@@ -88,11 +75,12 @@ public:
 	static int release_block(int block);//释放一个被占用的块
 	static int get_filesize(os_file* fp);//获取文件大小
 	static void get_dir(void* dir_buf, iNode* f_inode);//面向文件系统的读目录接口
+	static int os_readfile(void* v_buf, int size, os_file* fp);//内部读文件接口
+	static int os_writefile(void* v_buf, int size, os_file* fp);//内部读文件接口
+
 	/*	对外接口	*/
-	static int os_readfile(void* v_buf, int size, os_file* fp);//面向进程的读文件接口
-	static int os_writefile(void* v_buf, int size, os_file* fp);//面向进程的写文件接口
-	static bool write_block(long block, char* buf)//磁盘块写入缓冲区
-	static bool read_block(long block, char* buf)//磁盘块读入缓冲区
+	static bool write_block(long block, char* buf);//磁盘块写入缓冲区
+	static bool read_block(long block, char* buf);//磁盘块读入缓冲区
 	/*	对外接口结束	*/
 };
 
@@ -122,15 +110,23 @@ public:
 	static bool rmfile(string filename);	//	在当前目录下删除子文件，成功返回 T，不成功返回 F
 	static int openFile(string filename);	//	打开一个文件，返回文件描述符标识ID
 	static void closeFile(int filenum);		//	关闭文件描述符为filenum的文件
+	static int readfile(int filenum, int size, void* v_buf);//面向进程的读文件接口
+	static int writefile(int filenum, int size, void* v_buf);//面向进程的写文件接口
+    static bool writeBlock(long block, char* buf);//内存写入磁盘块
+    static bool readBlock(long block, char* buf);//磁盘块写入内存
 	static unsigned short getFileType(string filename);	//返回当前目录下的一个文件的类型
 	/*	对外接口结束	*/
 
-
+	/*	文件内部测试所用函数	*/
 	static void waitForInput();
+	/*	文件内部测试所用函数结束	*/
+
 private:
+	/*	文件内部测试所用函数	*/
 	static string trim(string str);
 	static string displayPath(int flag);
 	static void InputAnalyse(vector<string> args);
 	static void InputCut(string input);
+	/*	文件内部测试所用函数结束	*/
 };
 

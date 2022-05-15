@@ -1,32 +1,45 @@
 #include "process_manager.h"
 #include <QtGlobal>
 
+ProcessManager::ProcessManager(CPU* cpu,MemoryManager* mgr)
+{
+    this->cpu = cpu;
+    this->mmgr = mgr;
+}
+
+void ProcessManager::setDrivers(map<IOType,DeviceDriver*> ds)
+{
+    this->drivers = ds;
+}
+
 void ProcessManager::createProcess(string workDir)
 {
     //step 1: create a new PCB and initiate it
     PCB* pcb = new PCB();
     pcb->setPId(this->getAllPCB().size() + 1);
-    pcb->setEvent(-1);
+    pcb->setEvent(normal);
 
     //generate the priority randomly whose value is between 1 and 5
     pcb->setPriority(qrand()%5 + 1);
 
     pcb->setWorkDir(workDir);
     pcb->setActiveFile(-1);
-    pcb->setOperation(-1);
 
     //step 2: create a virtual address space for it and build a page table
-    memory -> initPageTable(workDir)
+    mmgr->pTable.Init_page(workDir);
     pcb->setTextStart(0);
-    pcb->setTextEnd();
-    pcb->setDataStart();
-    pcb->setDataEnd();
-    pcb->setBase();
-    pcb->setTop();
-    pcb->setPC(pcb->getTextStart());
-    int r[REG_NUM] = {0};
-    pcb->setReg(r);
 
+    //get the program's size
+    pcb->setTextEnd(size);
+
+    pcb->setBase(page_size*max_page_number);
+    pcb->setTop(page_size*max_page_number);
+    pcb->setPC(pcb->getTextStart());
+
+    for(int i = 0; i < REG_NUM; i ++)
+    {
+        pcb->setReg(i,0);
+    }
 
 
     //step 3: put it into ready queue based on its priority
@@ -64,24 +77,22 @@ void ProcessManager::run2blocked()
     PCB* pcb = runningPCB;
     pcb->setStatus(blocked);
 
+    IOType t;
     // add pcb to the proper queue according to its triggered event
     switch (pcb->getEvent())
     {
         case std_io:
-        {
-            stdio->pushWaitingQue(pcb);
-            emit tellIOExec(std);
-        }
+            t = std;
             break;
         case disk_io:
-        {
-            diskio->pushWaitingQue(pcb);
-            emit tellIOExec(disk);
-        }
+            t = disk;
             break;
     //case preempted:
 
     }
+
+    this->drivers[t]->pushWaitingQue(pcb);
+    emit tellIOExec(t);
 
     // dispatch the next selected process to run
     runningPCB = NULL;

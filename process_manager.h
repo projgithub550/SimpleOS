@@ -9,6 +9,8 @@
 #include "pcb.h"
 #include "cpu.h"
 #include "device_driver.h"
+#include "memory.h"
+#include "constant.h"
 
 using namespace std;
 
@@ -28,14 +30,17 @@ class ProcessManager : public QObject
         static bool cmp(PCB* a, PCB* b) { return a->getPriority() < b->getPriority(); }
 
         CPU* cpu;
-        DeviceDriver *stdio;
-        DeviceDriver *diskio;
+        map<IOType,DeviceDriver*> drivers;
+        MemoryManager* mmgr;
 
         priority_queue<PCB*, vector<PCB*>, decltype(&cmp)> readyQue;
         PCB* runningPCB;					//运行中的PC
         vector<PCB*> allPCB;              //记录所有活着的PCB
 
     public:
+        ProcessManager(CPU* cpu,MemoryManager* mgr);
+
+        void setDrivers(map<IOType,DeviceDriver*> drs);
         void createProcess(string workDir);
 
         void ready2run();

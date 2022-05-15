@@ -211,7 +211,7 @@ void MemoryManager::fifo(int pid,int wPage,int wBlock)//进程号，访问页号
     }
 }
 
-void MemoryManager::LRU(int pid,int wPage,int wBlock)
+void MemoryManager::LRU(int pid,int& wPage,int& wBlock)
 {
     int flag=0,temp;
     if(this->page_tables[pid].table[wPage][0] != -3)  //页面在物理内存只改调度顺序    

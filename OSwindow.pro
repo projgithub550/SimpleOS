@@ -26,16 +26,18 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    dir.cpp \
-    disk.cpp \
     editor.cpp \
-    file.cpp \
-    filetools.cpp \
-    test.cpp \
     cpu.cpp \
     process_manager.cpp \
-    memory.cpp \
-    device_driver.cpp
+    device_driver.cpp \
+    Memory_manager.cpp \
+    pagetable.cpp \
+    quicktable.cpp \
+    file.cpp \
+    filetools.cpp \
+    dir.cpp \
+    disk.cpp \
+    file_manager.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -45,7 +47,8 @@ HEADERS += \
     device_driver.h \
     pcb.h \
     process_manager.h \
-    constant.h
+    constant.h \
+    memory.h
 
 FORMS += \
         mainwindow.ui \

@@ -1,37 +1,12 @@
 #pragma once
 #include<string>
 #include<map>
+#include<vector>
+#include<algorithm>
 #include "constant.h"
-
 
 using namespace std;
 
-enum Status
-{
-    ready,
-    running,
-    blocked,
-    dead
-};
-
-enum Event
-{
-    normal,
-    std_io,
-    disk_io,
-    end
-};
-
-//enum IOtype
-//{
-//    type_stdio,
-//    type_diskio
-//};
-
-enum Operation {
-    op_read,
-    op_write
-};
 
 class PCB
 {
@@ -45,7 +20,6 @@ class PCB
 
         //进程控制信息
         int textStart,textEnd;
-        int dataStart,dataEnd;
         int base,top;
 
         //CPU控制信息
@@ -100,16 +74,6 @@ class PCB
         {
             this->event = _event;
         }
-
-//        IOtype getIOtype()
-//        {
-//            return this->ioType;
-//        }
-//        void setIOtype(IOtype type)
-//        {
-//            this->ioType = type;
-//        }
-
         int getTextStart()
         {
             return this->textStart;
@@ -126,24 +90,6 @@ class PCB
         void setTextEnd(int end)
         {
             this->textEnd = end;
-        }
-
-        int getDataStart()
-        {
-            return this->dataStart;
-        }
-        void setDataStart(int start)
-        {
-            this->dataStart = start;
-        }
-
-        int getDataEnd()
-        {
-            return this->dataEnd;
-        }
-        void setDataEnd(int end)
-        {
-            this->dataEnd = end;
         }
 
         int getBase()
@@ -164,14 +110,14 @@ class PCB
             this->top = _top;
         }
 
-        int* getReg()
+        int getReg(int i)
         {
-            return this->reg;
+            return this->reg[i];
         }
 
-        void setReg(int r[])
+        void setReg(int i,int value)
         {
-            this->reg = r;
+            this->reg[i] = value;
         }
 
         int getPC()
@@ -192,15 +138,19 @@ class PCB
             this->workDir = workDir;
         }
 
-        map<int,int> getFileTable()
+        vector<int> getFileIds()
         {
-            return this->fileTable;
+            return this->fileIds;
         }
-        void setFileTable(map<int,int> file_table)
+        void pushFileIds(int fileId)
         {
-            this->fileTable = file_table;
+            vector<int>::iterator ib = this->fileIds.begin();
+             vector<int>::iterator ie = this->fileIds.end();
+            if(find(ib,ie,fileId) == ie)
+            {
+                this->fileIds.push_back(fileId);
+            }
         }
-
 
         int getActiveFile()
         {

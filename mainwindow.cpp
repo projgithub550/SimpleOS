@@ -18,16 +18,19 @@ MainWindow::MainWindow(QWidget *parent)
     cpu->moveToThread(cpuThread);
 
     // 根据配置文件创建若干个io device，并存入IO map
-    for() {
-        DeviceDriver* driver = new DeviceDriver;
+    for(int i = 0; i < N_DR; i = i + 1)
+    {
+        driver[(IOType)i] = new DeviceDriver((IOType)i);
         QThread *IOThread = new QThread;
-        IOMap[driver] = IOThread;
+        IOMap[driver[(IOType)i]] = IOThread;
         driver->moveToThread(IOThread);
         IOThread->start();
 
         connect(procManager, SIGNAL(tellIOExec(IOType)), device, SLOT(handleEvent(IOType)));
         connect(device, SIGNAL(tellManFinIO(PCB*)), procManager, SLOT(blocked2ready(PCB*)));
     }
+    procManager->setDrivers(this->drivers);
+
     // begin listen signal
     procManThread->start();
     cpuThread->start();

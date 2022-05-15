@@ -9,6 +9,7 @@
 # include <QListWidgetItem>
 # include "process_manager.h"
 # include "cpu.h"
+# include "devicetopology.h"
 # include "editor.h"
 
 #include "file_dir.h"
@@ -41,10 +42,12 @@ private:
 
     CPU* cpu;
     ProcessManager* procManager;
+    map<IOType,DeviceDriver*> drivers;
     map<DeviceDriver*, QThread*> IOMap; //记录所有IO设备及其对应线程
 
     QThread *cpuThread;
     QThread *procManThread;
+
 
 };
 #endif // MAINWINDOW_H
