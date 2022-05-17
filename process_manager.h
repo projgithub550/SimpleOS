@@ -1,4 +1,6 @@
-#pragma once
+#ifndef PROCESS_MANAGER_H
+#define PROCESS_MANAGER_H
+
 #include <QObject>
 
 #include <queue>
@@ -10,6 +12,7 @@
 #include "cpu.h"
 #include "device_driver.h"
 #include "memory.h"
+#include "file_dir.h"
 #include "constant.h"
 
 using namespace std;
@@ -58,3 +61,5 @@ class ProcessManager : public QObject
         }
 
 };
+
+#endif

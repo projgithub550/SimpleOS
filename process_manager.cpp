@@ -20,17 +20,19 @@ void ProcessManager::createProcess(string workDir)
     pcb->setEvent(normal);
 
     //generate the priority randomly whose value is between 1 and 5
-    pcb->setPriority(qrand()%5 + 1);
+    pcb->setPriority(rand()%5 + 1);
 
     pcb->setWorkDir(workDir);
     pcb->setActiveFile(-1);
 
     //step 2: create a virtual address space for it and build a page table
-    mmgr->pTable.Init_page(workDir);
+    mmgr->p_table.initializePage(workDir);
     pcb->setTextStart(0);
 
     //get the program's size
-    pcb->setTextEnd(size);
+
+    int fileSize = File::Open_File(workDir)->f_iNode->i_size;
+    pcb->setTextEnd(fileSize);
 
     pcb->setBase(page_size*max_page_number);
     pcb->setTop(page_size*max_page_number);
@@ -45,7 +47,7 @@ void ProcessManager::createProcess(string workDir)
     //step 3: put it into ready queue based on its priority
     this->allPCB.push_back(pcb);
     readyQue.push(pcb);
-    pcb->setStatus(st_ready);
+    pcb->setStatus(ready);
 
     //step 2: transform to running status when cpu is free
     this->ready2run();
@@ -82,17 +84,16 @@ void ProcessManager::run2blocked()
     switch (pcb->getEvent())
     {
         case std_io:
-            t = std;
+            this->drivers[std]->pushWaitingQue(pcb);
+            emit tellIOExec(std);
             break;
         case disk_io:
-            t = disk;
+            this->drivers[disk]->pushWaitingQue(pcb);
+            emit tellIOExec(disk);
             break;
     //case preempted:
 
     }
-
-    this->drivers[t]->pushWaitingQue(pcb);
-    emit tellIOExec(t);
 
     // dispatch the next selected process to run
     runningPCB = NULL;
@@ -140,6 +141,3 @@ bool ProcessManager::tryPreemp() {
     // fail to preempt
     return false;
 }
-
-
-

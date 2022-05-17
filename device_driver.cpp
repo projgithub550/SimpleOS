@@ -1,8 +1,6 @@
 ﻿#include "device_driver.h"
 
 
-
-
 void DeviceDriver::DeviceDriver(IOType t,MemoryManager* mgr)
 {
     this->type = t;
@@ -16,7 +14,7 @@ void DeviceDriver::handleEvent(IOType _type)
     if(this->type != _type) return;
 
 
-	// start executing
+    // start executing
     runningPCB = waitingQue.front();
     waitingQue.pop();
 
@@ -101,7 +99,7 @@ void DeviceDriver::handlePageFault()
     int pId = runningPCB->getPId();
 
     //find the page we need in the disk
-    int blockNum = mmgr->pTable.findblocknumber(pId,addr);
+    int blockNum = mmgr->p_table.findblocknumber(pId,addr);
 
     //select a frame (logic page number) for replacement
     int wPage,wBlock;
@@ -144,7 +142,7 @@ void DeviceDriver::finishPCB(int res)
     {
         emit tellError(runningPCB);
     }
-	
+
     runningPCB = NULL;
 }
 

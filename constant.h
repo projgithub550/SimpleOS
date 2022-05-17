@@ -53,7 +53,8 @@ enum IOType
 #define Valid 1
 
 #define page_size 1024//页大小
-#define occupancy 32 //页表实际占用的页
+#define occupancy 16 //页表实际占用的页
+
 #define max_page_number 64 //虚拟页表最多含有的页
 #define q_max_page_number 16 //快表最多含有的页
 #define schedule_queue_length 16 //调度队列
@@ -73,8 +74,5 @@ enum IOType
 #define MAX_DIR_DEPTH 256	//限制最大的目录深度
 #define PATH_LENGTH 100		//路径字符串最大长度
 #define FBLK_NUM 4			//文件中block的个数
-
-
-
 
 #endif // CONSTANT_H

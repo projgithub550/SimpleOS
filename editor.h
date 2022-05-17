@@ -2,6 +2,9 @@
 #define EDITOR_H
 
 #include <QDialog>
+#include <QMessageBox>
+
+#include "file_dir.h"
 
 namespace Ui {
 class Editor;
@@ -13,6 +16,7 @@ class Editor : public QDialog
 
 public:
     explicit Editor(QWidget *parent = nullptr);
+    explicit Editor(string name, QWidget *parent = nullptr);
     ~Editor();
 
 private slots:
@@ -20,6 +24,9 @@ private slots:
 
 private:
     Ui::Editor *ui;
+    QString file_name;
+    int file_num;
+    QString content;
 };
 
 #endif // EDITOR_H

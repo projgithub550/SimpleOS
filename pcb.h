@@ -16,7 +16,7 @@ class PCB
         //进程调度信息
         Status status;
         int priority;
-        Event event; 
+        Event event;
 
         //进程控制信息
         int textStart,textEnd;

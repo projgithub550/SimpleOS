@@ -5,6 +5,7 @@
 #-------------------------------------------------
 
 QT       += core gui
+QT    +=charts
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -24,20 +25,24 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES += \
+    Memory_manager.cpp \
+    file_manager.cpp \
         main.cpp \
         mainwindow.cpp \
-    editor.cpp \
-    cpu.cpp \
-    process_manager.cpp \
-    device_driver.cpp \
-    Memory_manager.cpp \
-    pagetable.cpp \
-    quicktable.cpp \
-    file.cpp \
-    filetools.cpp \
     dir.cpp \
     disk.cpp \
-    file_manager.cpp
+    editor.cpp \
+    file.cpp \
+    filetools.cpp \
+    mkdir.cpp \
+    mkfile.cpp \
+    pagetable.cpp \
+    procpagedialog.cpp \
+    quicktable.cpp \
+    cpu.cpp \
+    process_manager.cpp \
+    memory.cpp \
+    device_driver.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -45,12 +50,22 @@ HEADERS += \
     file_dir.h \
     cpu.h \
     device_driver.h \
+    memory.h \
+    mkdir.h \
+    mkfile.h \
     pcb.h \
     process_manager.h \
     constant.h \
-    memory.h
+    procpagedialog.h
 
 FORMS += \
         mainwindow.ui \
     editor.ui \
-    mainwindow.ui
+    mainwindow.ui \
+    mkdir.ui \
+    mkfile.ui \
+    procpagedialog.ui
+
+DISTFILES += \
+    OSwindow.pro.user \
+    OSwindow.pro.user.bfe5b37.4.8-pre1

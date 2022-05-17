@@ -1,14 +1,14 @@
 #include <algorithm>//STL通用算法
 #include <iostream>
-#include <map> 
+#include <map>
 #include <vector>
 #include <sstream>
 #include <string.h>
 #include <cmath>
 #include "memory.h"
-//#include "file_dir.h"
+#include "file_dir.h"
 
-page_table::page_table()
+Page_table::Page_table()
 {
     for(int i=0;i<occupancy;i++)
     {
@@ -18,84 +18,84 @@ page_table::page_table()
     }
 }
 
-void page_table::Init_page(string f_name)
+void Page_table::initializePage(string f_name)
 {
-   os_file* os_f=File::Open_File(f_name);//先通过文件目录查找到文件的句柄
-     for(int i=0;i<FBLK_NUM ;i++)//将文件句柄对应的磁盘块号与分配的页号对应
-        {
-            for(int j=0;j<occupancy/2;j++)
-            {
+    os_file* os_f=File::Open_File(f_name);//先通过文件目录查找到文件的句柄
+    for(int i=0;i<FBLK_NUM ;i++)//将文件句柄对应的磁盘块号与分配的页号对应
+       {
+           for(int j=0;j<occupancy/2;j++)
+           {
                if(this->table[j][1]==-2)
-                {
-                     this->table[j][1]=os_f->f_iNode->block_address[i];//通过句柄找到对应的磁盘块号给没有存上的页表对应上
+               {
+                    this->table[j][1]=os_f->f_iNode->block_address[i];//通过句柄找到对应的磁盘块号给没有存上的页表对应上
                     break;
                }
-            }
+           }
        }
-     File::Close_File(os_f);
- }
+    File::Close_File(os_f);
+}
 
-void page_table::Insert(int page_num,int temp_block)//插入一个空页
+void Page_table::insertPage(int page_num,int temp_block)//插入一个空页
 {
     this->table[page_num].push_back(-3);
     this->table[page_num].push_back(temp_block);
     this->table[page_num].push_back(0);
 }
 
-void page_table::Delete(int page_num,int temp_block)//删除一个页
+void Page_table::deletePage(int page_num,int temp_block)//删除一个页
 {
     map<int,vector<int> >::iterator key = table.find(page_num);
     if(key!=table.end())
- 	{
-		table.erase(key);
- 	}
- 	Insert(page_num,temp_block);
+    {
+        table.erase(key);
+    }
+    insertPage(page_num,temp_block);
 }
 
-int page_table::findblocknumber(int pid,int address)
+int Page_table::findBlockNumber(int pid,int address)
 {
-	int pagenumber,blocknum;
-	pagenumber=address/page_size;
+    int pagenumber,blocknum;
+    pagenumber=address/page_size;
     if (pagenumber < table.size())
     {
         blocknum = table[pagenumber][1];  //查找磁盘块号
         return blocknum;
-    }   
+    }
     else
         return invalid_value;
 }
 
-int page_table::findPagenumber(int pid,int address)
+int Page_table::findPageNumber(int pid,int address)
 {
     int pagenumber,index;
-	pagenumber=address/page_size;
+    pagenumber=address/page_size;
     if (pagenumber < table.size())
     {
         index = table[pagenumber][0];  //查找物理页号
         return index;
-    }   
+    }
     else
         return invalid_value;
 }
 
-int page_table::Find_offest(int pid,int address)//计算偏移量
+int Page_table::findOffset(int pid,int address)//计算偏移量
 {
     int Deviation;
     Deviation=address%page_size;
     return Deviation;
 }
 
-void page_table::revise(int page_num, int frame_num, int valid,int wBlock)//通过缺页调度算法进行页表的更改
+void Page_table::revisePage(int page_num, int frame_num, int valid,int wBlock)//通过缺页调度算法进行页表的更改
 {
     if(valid == 1)
     {
         table[page_num][2] = Valid;
         table[page_num][1] = wBlock;
-		table[page_num][0] = frame_num;
-    }     
+        table[page_num][0] = frame_num;
+    }
     else
     {
         table[page_num][2] = 0;
-		table[page_num][0] = Physical_blocks_Not_exist;
+        table[page_num][0] = Physical_blocks_Not_exist;
     }
 }
