@@ -51,10 +51,6 @@ class ProcessManager : public QObject
         // When there is a new PCB into readyQue, try to use the top to preempt the runningPCB
         bool tryPreemp();
 
-        //上下文切换，包括pcb和cpu状态的保存
-        void saveContext();
-        void recoverContext(PCB* pcb);
-
         vector<PCB*> getAllPCB()
         {
             return this->allPCB;

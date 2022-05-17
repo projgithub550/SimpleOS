@@ -56,7 +56,7 @@ bool MemoryManager::freePage(int pid)
     return true;
 }
 
-string MemoryManager::showPage(int pid)
+void MemoryManager::showPage(int pid)
 {
     printf("total: %dB allocated: %dB free: %dB aid:%d\n",Total_physical_m, physical_size_used,Total_physical_m - physical_size_used,cur_aid);
     Page_table temp_table;
@@ -169,7 +169,7 @@ int MemoryManager::Query_or_create(int pid,int address)
     if(flag)
     {
         page_embed += 1;
-        offset=temp_table.findOffset(pid,address);
+       // offset=temp_table.findOffset(pid,address);
         Phisical_pageID = temp_table.findPageNumber(pid,address);
         if (Phisical_pageID == -1)//没找到
         {
@@ -388,7 +388,7 @@ void MemoryManager::LRU(int pid,int& wPage,int& wBlock)
     }
 }
 
-int MemoryManager::readMemory(int pid,int startAddr,int size,void* buff)
+int MemoryManager::readMem(int pid,int startAddr,int size,void* buff)
 {
     int start_block,offest;
     start_block=this->page_tables[pid].findPageNumber(pid,startAddr);//查找对应进程的页表找到对应地址的起始块
@@ -410,7 +410,7 @@ int MemoryManager::readMemory(int pid,int startAddr,int size,void* buff)
 
 }
 
-int MemoryManager::writeMemory(int pid,int startAddr,int size,void* buff)
+int MemoryManager::writeMem(int pid,int startAddr,int size,void* buff)
 {
     int start_block,offest;
     physical_size_used+=page_size;
@@ -433,7 +433,7 @@ int MemoryManager::writeMemory(int pid,int startAddr,int size,void* buff)
     }
 }
 
-int MemoryManager::readMemoryPage(int wPage,char *buff)
+int MemoryManager::readMemPage(int wPage,char *buff)
 {
     FILE* fp;
     fp = fopen("memory.bin", "rb");
@@ -451,7 +451,7 @@ int MemoryManager::readMemoryPage(int wPage,char *buff)
     }
 }
 
-int MemoryManager::writeMemoryPage(int wPage,char *buff)
+int MemoryManager::writeMemPage(int wPage,char *buff)
 {
     FILE* fp;
     physical_size_used+=page_size;
@@ -470,4 +470,66 @@ int MemoryManager::writeMemoryPage(int wPage,char *buff)
         return invalid_value;
     }
 }
+
+int MemoryManager::getProcPhyMem(int pid)
+{
+    int Occupied_Phisical_memory;
+    Page_table temp_table;
+    int flag=0;
+    for(map<int,Page_table>::iterator i=page_tables.begin(); i!=page_tables.end(); i++)
+    {
+        if(i->first==pid)
+        {
+            flag=1;//表示进程所在页表在内存中
+            temp_table=i->second;
+            break;
+        }
+    }
+    if(flag)
+    {
+        for(int i=0;i<occupancy;i++)
+        {
+            if(temp_table.table[i][2]==1)
+            {
+                char *buff;
+                readMemPage(temp_table.table[i][0],buff);
+                Occupied_Phisical_memory+=sizeof(buff);//累加每一页的物理内存
+                memset(buff,'\0',page_size);
+            }
+        }
+        return Occupied_Phisical_memory;
+    }
+    else
+    {
+        printf("error!");
+        return invalid_value;
+    }
+}
+
+int MemoryManager::getProcVirMem(int pid)
+{
+    int occupied_Virtual_Memory;
+    Page_table temp_table;
+    int flag=0;
+    for(map<int,Page_table>::iterator i=page_tables.begin(); i!=page_tables.end(); i++)
+    {
+        if(i->first==pid)
+        {
+            flag=1;//表示进程所在页表在内存中
+            temp_table=i->second;
+            break;
+        }
+    }
+    if(flag)
+    {
+        occupied_Virtual_Memory=temp_table.table.size();
+        return occupied_Virtual_Memory;
+    }
+    else
+    {
+        printf("error!");
+        return invalid_value;
+    }
+}
+
 

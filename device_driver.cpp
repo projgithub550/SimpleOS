@@ -1,7 +1,6 @@
 ﻿#include "device_driver.h"
 
-
-void DeviceDriver::DeviceDriver(IOType t,MemoryManager* mgr)
+DeviceDriver::DeviceDriver(IOType t,MemoryManager* mgr)
 {
     this->type = t;
     this->mmgr = mgr;
@@ -25,7 +24,8 @@ void DeviceDriver::handleEvent(IOType _type)
     }
 
     //step 1: find the file we are about to operate
-    int operFile = runningPCB->getActiveFile();
+    int pid = runningPCB->getPId();
+    int operfile = runningPCB->getActiveFile();
     char buff[BLOCK_SIZE];
     int startAddr = runningPCB->getStartAddr();
     int size = runningPCB->getSize();
@@ -43,7 +43,7 @@ void DeviceDriver::handleEvent(IOType _type)
 
             if(status == invalid_value)
             {
-                finishPCB(err);
+                finishPCB(ERR);
                 return ;
             }
 
@@ -55,7 +55,7 @@ void DeviceDriver::handleEvent(IOType _type)
         status = mmgr->writeMem(pid,startAddr,rmn,buff);
         if(status == invalid_value)
         {
-            finishPCB(err);
+            finishPCB(ERR);
             return ;
         }
 
@@ -69,7 +69,7 @@ void DeviceDriver::handleEvent(IOType _type)
 
             if(status == invalid_value)
             {
-                finishPCB(err);
+                finishPCB(ERR);
                 return ;
             }
 
@@ -81,7 +81,7 @@ void DeviceDriver::handleEvent(IOType _type)
         status = mmgr->readMem(pid,startAddr,rmn,buff);
         if(status == invalid_value)
         {
-            finishPCB(err);
+            finishPCB(ERR);
             return ;
         }
 
@@ -89,7 +89,7 @@ void DeviceDriver::handleEvent(IOType _type)
     }
 
     //finish executing
-    finishPCB(ok);
+    finishPCB(OK);
 }
 
 
@@ -99,7 +99,7 @@ void DeviceDriver::handlePageFault()
     int pId = runningPCB->getPId();
 
     //find the page we need in the disk
-    int blockNum = mmgr->p_table.findblocknumber(pId,addr);
+    int blockNum = mmgr->p_table.findBlockNumber(pId,addr);
 
     //select a frame (logic page number) for replacement
     int wPage,wBlock;
@@ -107,7 +107,7 @@ void DeviceDriver::handlePageFault()
     //wPage:写到物理页中的页号
     /*wBlock:页替换的时候将替换掉的那页内容写回磁盘，wBlock是要写的磁盘块号，如果为-1，表示
     页表没满，不需要写回*/
-    mmgr->LRU(pid,wPage,wBlock);
+    mmgr->LRU(pId,wPage,wBlock);
 
     //whether the page table is full or not
     if ( wBlock != -1 )
@@ -133,7 +133,7 @@ void DeviceDriver::handlePageFault()
 
 void DeviceDriver::finishPCB(int res)
 {
-    if(res == ok)
+    if(res == OK)
     {
         // send signal to manager
         emit tellManFinIO(runningPCB);

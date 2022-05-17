@@ -1,6 +1,13 @@
 #ifndef CONSTANT_H
 #define CONSTANT_H
 
+#include<vector>
+#include<string>
+#include<map>
+#include<queue>
+
+using namespace std;
+
 //process
 enum Status
 {
@@ -9,6 +16,8 @@ enum Status
     blocked,
     dead
 };
+
+
 
 enum Event
 {
@@ -37,12 +46,13 @@ const int BLOCK = -1;	   // 读写指令失败后返回值，意味着缺页中�
 
 enum IOType
 {
-    std,
+    stdrd,
     disk
 };
+
 #define N_DR 2
-#define ok 1
-#define err -1
+#define OK 1
+#define ERR -1
 
 //memory
 

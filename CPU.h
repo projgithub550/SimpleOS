@@ -1,9 +1,19 @@
-#pragma once
+#ifndef CPU_H
+#define CPU_H
+
+#include <QObject>
+
 #include "pcb.h"
+#include "memory.h"
 #include "constant.h"
 
-class CPU
+class CPU : public QObject
 {
+    Q_OBJECT
+signals:
+    void tellManDead();
+    void tellManBlocked();
+
 private:
     // 在执行读写文件操作前准备如下：[7]存储读写意图，[0]存储文件句柄，[6]存储读取大小，[5]存储开始地址
     int Reg[REG_NUM]; // [0]=0
@@ -11,7 +21,8 @@ private:
     int IR;
 
     PCB *runningPCB;
-    ProcessManager *manager;
+    MemoryManager* mmgr;
+
 
     int getReg(int i)
     {
@@ -21,8 +32,11 @@ private:
     }
 
 public:
-    void CPU::recoverContext(); // 恢复现场
-    void CPU::saveContext(); // 保存现场
+    CPU(MemoryManager* m);
+    void setRunningPCB(PCB* pcb);
+
+    void recoverContext(); // 恢复现场
+    void saveContext(); // 保存现场
 
     void executePCB();		 // 执行PCB
     void finishPCB();		 // 结束PCB
@@ -30,3 +44,4 @@ public:
     int fetchInstruction(); // 获取指令
     int executeInstruction(); // 执行指令
 };
+#endif

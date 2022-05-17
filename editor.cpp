@@ -30,7 +30,7 @@ void Editor::on_savePBT_clicked()
     void *tmp = &content;
 
     file_num = FileManager::openFile(file_name.toStdString());
-    if(!FileManager::writefile(file_num, len, tmp)) {
+    if(!FileManager::writeFile(file_num, len, tmp)) {
         QMessageBox::warning(this, "Warning", "Save failed!");
     }
     FileManager::closeFile(file_num);

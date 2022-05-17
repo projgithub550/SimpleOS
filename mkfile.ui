@@ -13,12 +13,12 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QLineEdit" name="lineEdit">
+  <widget class="QLineEdit" name="le_fname">
    <property name="geometry">
     <rect>
-     <x>100</x>
+     <x>90</x>
      <y>50</y>
-     <width>171</width>
+     <width>131</width>
      <height>21</height>
     </rect>
    </property>
@@ -44,6 +44,16 @@
    </property>
    <property name="text">
     <string>确认</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="le_ftype">
+   <property name="geometry">
+    <rect>
+     <x>230</x>
+     <y>50</y>
+     <width>51</width>
+     <height>21</height>
+    </rect>
    </property>
   </widget>
  </widget>

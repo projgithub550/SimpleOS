@@ -7,6 +7,7 @@
 #include <sstream>
 #include <cmath>
 #include "constant.h"
+#include "string.h"
 using namespace std;
 
 
@@ -58,13 +59,13 @@ class MemoryManager
         void LRU(int pid,int& wPage,int& wBlock);
         int Query_or_create(int pid,int address);
 
-        int readMemory(int pid,int startAddr,int size,void* buff);//读内存函数（进程号，读的起始地址，读的大小，缓冲区）
-        int writeMemory(int pid,int startAddr,int size,void* buff);//写内存函数
-        int readMemoryPage(int wPage,char *buff);//读物理页对应的内存块
-        int writeMemoryPage(int wPage,char *buff);//写入物理页对应的内存块
+        int readMem(int pid,int startAddr,int size,void* buff);//读内存函数（进程号，读的起始地址，读的大小，缓冲区）
+        int writeMem(int pid,int startAddr,int size,void* buff);//写内存函数
+        int readMemPage(int wPage,char *buff);//读物理页对应的内存块
+        int writeMemPage(int wPage,char *buff);//写入物理页对应的内存块
 
         // 对外可视化接口
-        string showPage(int pid);
+        void showPage(int pid);
         float getMemRate();
         float getPageFaultRate();
         vector<string> printPageByPID(int pid);
@@ -72,6 +73,8 @@ class MemoryManager
         int getAllocatedMem();
         int getFreeMem();
         int getAid();
+        int getProcPhyMem(int pid);
+        int getProcVirMem(int pid);
 };
 
 #endif

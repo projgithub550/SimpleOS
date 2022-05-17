@@ -41,11 +41,9 @@ SOURCES += \
     quicktable.cpp \
     cpu.cpp \
     process_manager.cpp \
-    memory.cpp \
     device_driver.cpp
 
 HEADERS += \
-        mainwindow.h \
     editor.h \
     file_dir.h \
     cpu.h \
@@ -56,7 +54,8 @@ HEADERS += \
     pcb.h \
     process_manager.h \
     constant.h \
-    procpagedialog.h
+    procpagedialog.h \
+    mainwindow.h
 
 FORMS += \
         mainwindow.ui \

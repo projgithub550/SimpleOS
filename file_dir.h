@@ -1,12 +1,16 @@
-﻿#include <iostream>
+﻿#ifndef FILE_DIR_H
+#define FILE_DIR_H
+
+#include <iostream>
 #include <string>
 #include <vector>
 #include <stack>
 #include <map>
 #include <malloc.h>
+
+#include "constant.h"
+
 using namespace std;
-
-
 
 extern bool debug;
 
@@ -103,15 +107,15 @@ public:
     static bool ls();					//	返回当前目录下的所有的文件名称、类型####
     static string pwd();				//	显示当前所在路径,返回当前路径字符串
     static bool cd(string dirname);		//	成功返回 T，不成功返回 F
-    static bool cat(string filename); 	//	打开txt文件，并打印显示
+    static string cat(string filename); 	//	打开txt文件，并打印显示
     static bool mkdir(string dirname);	//	在当前目录下创建新目录
-    static bool mkfile(string filename, unsigned short filetype);	//	在当前目录下创建新文件
+    static bool mkfile(string filename, string content, unsigned short f_type);	//	在当前目录下创建新文件
     static bool rmdir(string dirname);		//	在当前目录下删除子目录，成功返回 T，不成功返回 F
     static bool rmfile(string filename);	//	在当前目录下删除子文件，成功返回 T，不成功返回 F
     static int openFile(string filename);	//	打开一个文件，返回文件描述符标识ID
     static void closeFile(int filenum);		//	关闭文件描述符为filenum的文件
-    static int readfile(int filenum, int size, void* v_buf);//面向进程的读文件接口
-    static int writefile(int filenum, int size, void* v_buf);//面向进程的写文件接口
+    static int readFile(int filenum, int size, void* v_buf);//面向进程的读文件接口
+    static int writeFile(int filenum, int size, void* v_buf);//面向进程的写文件接口
     static bool writeBlock(long block, char* buf);//内存写入磁盘块
     static bool readBlock(long block, char* buf);//磁盘块写入内存
     static unsigned short getFileType(string filename);	//返回当前目录下的一个文件的类型
@@ -129,4 +133,4 @@ private:
     static void InputCut(string input);
     /*	文件内部测试所用函数结束	*/
 };
-
+#endif

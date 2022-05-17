@@ -1,4 +1,6 @@
-﻿#pragma once
+﻿#ifndef DEVICE_DRIVER_H
+#define DEVICE_DRIVER_H
+
 #include <QObject>
 
 #include <string>
@@ -8,11 +10,7 @@
 #include "memory.h"
 #include "file_dir.h"
 
-
-
 using namespace std;
-
-
 
 class DeviceDriver:public QObject
 {
@@ -44,3 +42,4 @@ public:
     void finishPCB(int res);
 
 };
+#endif

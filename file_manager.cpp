@@ -61,25 +61,25 @@ bool FileManager::cd(string dirname) {//	成功返回 1，不成功返回 0
     return DIR::os_cd(dirname);
 }
 
-bool FileManager::cat(string filename){	//	打开txt文件，并打印显示
+string FileManager::cat(string filename){	//	打开txt文件，并打印显示
     os_file* fp = File::Open_File(filename);
     if (!fp){
         cout << "open file error\n" << endl;
-        return false;
+        return "open file error";
     }
     int fileSize = disk::get_filesize(fp);
     char* dst = (char*)malloc(fileSize + 3);
     if (disk::os_readfile(dst, fileSize, fp)){
         dst[fileSize] = 0;
-        cout << (char*)dst << endl;
         File::Close_File(fp);
-        return true;
+        return (string)dst;
     }
     cout << "fread error" << endl;
     File::Close_File(fp);
-    return false;
+    return "read file error";
 }
 
+// 创建目录
 bool FileManager::mkdir(string dirname) {//	成功返回 1，不成功返回 0
     if (!File::Create_File(dirname, 0))
         return false;
@@ -87,19 +87,16 @@ bool FileManager::mkdir(string dirname) {//	成功返回 1，不成功返回 0
         return true;
 }
 
-bool FileManager::mkfile(string filename, unsigned short filetype) {//	成功返回 T，不成功返回 F
-    if (!File::Create_File(filename, filetype))
+// 创建txt文件
+bool FileManager::mkfile(string filename, string content,unsigned short f_type) {//	成功返回 T，不成功返回 F
+    if (!File::Create_File(filename, f_type))
         return false;
 
     os_file* fp = File::Open_File(filename);
     if (!fp)
         return false;
 
-    cout << "Please input the content of file: " << endl;
-    string tmp;
-    getline(cin, tmp);
-
-    if (disk::os_writefile((char*)tmp.c_str(), tmp.size(), fp)) {
+    if (disk::os_writefile((char*)content.c_str(), content.size(), fp)) {
         File::Close_File(fp);
         return true;
     }
@@ -135,6 +132,15 @@ void FileManager::closeFile(int filenum) {
     File::Close_File((os_file *)address);
 }
 
+bool FileManager::writeBlock(long block, char* buf)//内存写入磁盘块
+{
+    return disk::write_block(block,buf);
+}
+bool FileManager::readBlock(long block, char* buf)//磁盘块写入内存
+{
+    return disk::read_block(block,buf);
+}
+
 unsigned short FileManager::getFileType(string filename) {
     vector<pair<string, unsigned short>> fileList = DIR::os_ls();
     vector<pair<string, unsigned short>>::iterator it = fileList.begin();
@@ -149,31 +155,18 @@ unsigned short FileManager::getFileType(string filename) {
     return f_type;
 }
 
-int FileManager::readfile(int filenum, int size, void* v_buf)//面向进程的读文件接口
+int FileManager::readFile(int filenum, int size, void* v_buf)//面向进程的读文件接口
 {
     os_file* fp = (os_file*)NumOfFile[filenum];
     return disk::os_readfile(v_buf, size, fp);
 }
 
-int FileManager::writefile(int filenum, int size, void* v_buf)//面向进程的写文件接口
+int FileManager::writeFile(int filenum, int size, void* v_buf)//面向进程的写文件接口
 {
     os_file* fp = (os_file*)NumOfFile[filenum];
     return disk::os_writefile(v_buf, size, fp);
 
 }
-
-bool FileManager::readBlock(long block, char* buf)//磁盘块写入内存
-{
-    return disk::read_block(block,buf);
-}
-
-bool FileManager::writeBlock(long block, char* buf)//内存写入磁盘块
-{
-    return disk::write_block(block,buf);
-}
-
-
-
 
 /* 该函数为文件内部测试所用的函数 */
 string FileManager::trim(string str) {
@@ -181,6 +174,7 @@ string FileManager::trim(string str) {
     str.erase(str.find_last_not_of(" ") + 1);
     return str;
 }
+
 /* 该函数为文件内部测试所用的函数 */
 string FileManager::displayPath(int flag) {
     stack<string> tempdir(WorkingDir);
@@ -201,114 +195,115 @@ string FileManager::displayPath(int flag) {
     else
         return path;
 }
-/* 该函数为文件内部测试所用的函数 */
-void FileManager::InputAnalyse(vector<string> args){
-    int inPos = 0;
-
-    string command = args[0];
-    try{
-        if (command == "get" && args.size() > 1) {
-            unsigned short ftype = getFileType(args[1]);
-            if (ftype == 0)
-                cout << "DIR" << endl;
-            else if (ftype == 1)
-                cout << "TXT" << endl;
-            else if (ftype == 2)
-                cout << "EXE" << endl;
-            else
-                cout << "FILETYPE ERROR" << endl;
-        }
-        else if (command == "exit"){
-            isExit = true;
-            cout << "EXIT!" << endl;
-        }
-        else if (command == "rmfile"){
-            if (args.size() > 1)
-                if (rmfile(args[1]))
-                    cout << "remove file successfully\n";
-                else
-                    cout << "remove file error\n";
-        }
-        else if (command == "rmdir"){
-            if (args.size() > 1)
-                if (rmdir(args[1]))
-                    cout << "remove dir successfully\n";
-                else
-                    cout << "remove dir error\n";
-        }
-        else if (command == "cd"){
-            if (args.size() > 1)
-                if (cd(args[1]))
-                    cout << "error filename\n";
-        }
-        else if (command == "mkdir"){
-            if (args.size() > 1)
-                if (mkdir(args[1]))
-                    cout << "mkdir successfully\n";
-                else
-                    cout << "mkdir error\n";
-        }
-        else if (command == "ls"){
-            ls();
-        }
-        else if (command == "pwd"){
-            pwd();
-        }
-        else if (command == "cat"){
-            if (args.size() > 1)
-                if (!cat(args[1]))
-                    cout << "cat error\n";
-        }
-        else if (command == "mkfile" && args.size() == 1) {
-            unsigned short filetype = 0;
-            string tmp;
-            string filename;
-            while (!(filetype == 1 || filetype == 2)) {
-                cout << "选择你要创建的文件类型：1.txt 2.exe" << endl;
-                getline(cin, tmp);
-                filetype = atoi(tmp.c_str());
-            }
-            cout << "输入你要创建的文件名称：";
-            getline(cin, filename);
-            if (FileManager::mkfile(filename, filetype))
-                cout << "mkfile successfully\n";
-            else
-                cout << "mkfile error\n";
-        }
-        else {
-            cout << "COMMAND ERROR" << endl;
-        }
-    }
-    catch (const std::exception& e){
-        cout << "args error\n" << e.what() << endl;
-    }
-}
 
 /* 该函数为文件内部测试所用的函数 */
-void FileManager::InputCut(string input){
-    stringstream stream;
-    stream << input;
-    string tmp;
-    vector<string> argv;
-    while (!stream.eof()){
-        stream >> tmp;
-        argv.push_back(tmp);
-    }
-    InputAnalyse(argv);
-}
+//void FileManager::InputAnalyse(vector<string> args){
+//    int inPos = 0;
 
-/* 该函数为文件内部测试所用的函数 */
-void FileManager::waitForInput(){
-    char tmp[256];
-    displayPath(0);
+//    string command = args[0];
+//    try{
+//        if (command == "get" && args.size() > 1) {
+//            unsigned short ftype = getFileType(args[1]);
+//            if (ftype == 0)
+//                cout << "DIR" << endl;
+//            else if (ftype == 1)
+//                cout << "TXT" << endl;
+//            else if (ftype == 2)
+//                cout << "EXE" << endl;
+//            else
+//                cout << "FILETYPE ERROR" << endl;
+//        }
+//        else if (command == "exit"){
+//            isExit = true;
+//            cout << "EXIT!" << endl;
+//        }
+//        else if (command == "rmfile"){
+//            if (args.size() > 1)
+//                if (rmfile(args[1]))
+//                    cout << "remove file successfully\n";
+//                else
+//                    cout << "remove file error\n";
+//        }
+//        else if (command == "rmdir"){
+//            if (args.size() > 1)
+//                if (rmdir(args[1]))
+//                    cout << "remove dir successfully\n";
+//                else
+//                    cout << "remove dir error\n";
+//        }
+//        else if (command == "cd"){
+//            if (args.size() > 1)
+//                if (cd(args[1]))
+//                    cout << "error filename\n";
+//        }
+//        else if (command == "mkdir"){
+//            if (args.size() > 1)
+//                if (mkdir(args[1]))
+//                    cout << "mkdir successfully\n";
+//                else
+//                    cout << "mkdir error\n";
+//        }
+//        else if (command == "ls"){
+//            ls();
+//        }
+//        else if (command == "pwd"){
+//            pwd();
+//        }
+//        else if (command == "cat"){
+//            if (args.size() > 1)
+//                if (cat(args[1]).find_last_of("error") == string::npos)
+//                    cout << "cat error\n";
+//        }
+//        else if (command == "mkfile" && args.size() == 1) {
+//            unsigned short filetype = 0;
+//            string tmp;
+//            string filename;
+//            while (!(filetype == 1 || filetype == 2)) {
+//                cout << "选择你要创建的文件类型：1.txt 2.exe" << endl;
+//                getline(cin, tmp);
+//                filetype = atoi(tmp.c_str());
+//            }
+//            cout << "输入你要创建的文件名称：";
+//            getline(cin, filename);
+//            if (FileManager::mkfile(filename, filetype))
+//                cout << "mkfile successfully\n";
+//            else
+//                cout << "mkfile error\n";
+//        }
+//        else {
+//            cout << "COMMAND ERROR" << endl;
+//        }
+//    }
+//    catch (const std::exception& e){
+//        cout << "args error\n" << e.what() << endl;
+//    }
+//}
 
-    cin.getline(tmp, 256);
-    string tmpStr(tmp);
-    tmpStr = trim(tmpStr);
+///* 该函数为文件内部测试所用的函数 */
+//void FileManager::InputCut(string input){
+//    stringstream stream;
+//    stream << input;
+//    string tmp;
+//    vector<string> argv;
+//    while (!stream.eof()){
+//        stream >> tmp;
+//        argv.push_back(tmp);
+//    }
+//    InputAnalyse(argv);
+//}
 
-    if (tmpStr != "")
-        InputCut(tmpStr);
-}
+///* 该函数为文件内部测试所用的函数 */
+//void FileManager::waitForInput(){
+//    char tmp[256];
+//    displayPath(0);
+
+//    cin.getline(tmp, 256);
+//    string tmpStr(tmp);
+//    tmpStr = trim(tmpStr);
+
+//    if (tmpStr != "")
+//        InputCut(tmpStr);
+//}
 
 iNode FileManager::iNode_table[iNode_NUM];  //iNode table的数组，数组下标对应iNode编号
 dir FileManager::root_dir[MAX_FILE_NUM];    //根目录 数组实现  往下的每个子目录也是dir类型的数组，每一项是一个文件目录项
@@ -316,16 +311,3 @@ dir* FileManager::current_dir;				//保存每次更新analyse_path返回的dir�
 stack<string> FileManager::WorkingDir;		//记录路径名称
 stack<unsigned int> FileManager::WorkingNo; //记录路径上i节点的标号
 map<int, unsigned long int> FileManager::NumOfFile;
-
-/* main函数为文件内部测试所用的函数 */
-int main() {
-    /*  初始化当前工作环境  */
-    /*  首先激活磁盘（包括格式化和初始化）
-    /*  磁盘格式化时会建立模拟磁盘文件
-    /*  磁盘初始化时会初始化超级块、初始化iNode表、初始化位图、初始化目录表，最后写入磁盘   */
-    FileManager::InitFileSys();
-    isExit = false;
-    while (!isExit)
-        FileManager::waitForInput(); //  开始等待用户输入
-    return 0;
-}

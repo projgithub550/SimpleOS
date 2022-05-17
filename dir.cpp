@@ -27,7 +27,6 @@ vector<pair<string, unsigned short>> DIR::os_ls() {
 // 切换目录————os_cd(newpath);从当前目录切换到newpath下
 // newpath == #绝对路径 #相对路径 #..(上层目录)
 bool DIR::os_cd(string newpath) {
-    int tmp_no = -1;
     if (newpath == "..") {
         if (FileManager::WorkingDir.size() > 1) {
             FileManager::WorkingNo.pop();
@@ -52,7 +51,7 @@ bool DIR::os_cd(string newpath) {
 
 // 删除空目录————os_rmdir(sondir);
 bool DIR::os_rmdir(string dir_name) {
-    int f_i = fileTOOLS::find_son_pos(dir_name);//找到要删除的目录在其父目录的标号
+    int f_i = fileTOOLS::find_son_pos(dir_name);//找到要删除的目录在其父目录的标号 
     if (f_i == DIR_FILE_NUM + 1) {
         cout << "ERROR——找不到正确的文件或目录" << endl;
         return 0;

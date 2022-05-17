@@ -1,5 +1,14 @@
 #include "cpu.h"
 
+CPU::CPU(MemoryManager* m)
+{
+    this->mmgr = m;
+}
+void CPU::setRunningPCB(PCB* pcb)
+{
+    this->runningPCB = pcb;
+}
+
 void CPU::executePCB()
 {
     recoverContext();
@@ -51,7 +60,7 @@ void CPU::saveContext()
 
 int CPU::fetchInstruction() // 每次返回一个16位指令
 {
-    if(readMem(runningPCB->getPId(), PC, 2, (int *)&IR)==0)
+    if(mmgr->readMem(runningPCB->getPId(), PC, 2, (int *)&IR)==0)
     {
         runningPCB->setStartAddr(PC);
         return BLOCK_DISK;
@@ -87,7 +96,7 @@ int CPU::executeInstruction()
         Reg[RegA] = ImmU << 6;
         break;
     case 4:
-        if (writeMem(runningPCB->getPId(), getReg(RegB) + ImmS, 2, (void *)&Reg[RegA]) == BLOCK)
+        if (mmgr->writeMem(runningPCB->getPId(), getReg(RegB) + ImmS, 2, (void *)&Reg[RegA]) == BLOCK)
         {
             runningPCB->setStartAddr(getReg(RegB) + ImmS);
             PC -= 2;
@@ -96,7 +105,7 @@ int CPU::executeInstruction()
         break;
     case 5:
     {
-        if (readMem(runningPCB->getPId(), getReg(RegB) + ImmS, 2, (void *)&Reg[RegA]) == BLOCK)
+        if (mmgr->readMem(runningPCB->getPId(), getReg(RegB) + ImmS, 2, (void *)&Reg[RegA]) == BLOCK)
         {
             runningPCB->setStartAddr(getReg(RegB) + ImmS);
             PC -= 2;

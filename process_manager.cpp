@@ -84,8 +84,8 @@ void ProcessManager::run2blocked()
     switch (pcb->getEvent())
     {
         case std_io:
-            this->drivers[std]->pushWaitingQue(pcb);
-            emit tellIOExec(std);
+            this->drivers[stdrd]->pushWaitingQue(pcb);
+            emit tellIOExec(stdrd);
             break;
         case disk_io:
             this->drivers[disk]->pushWaitingQue(pcb);
@@ -117,7 +117,11 @@ void ProcessManager::run2dead()
 
 
     // delete this PCB
-    this->allPCB.erase(runningPCB);
+    vector<PCB*>::iterator it = find(allPCB.begin(),allPCB.end(),runningPCB);
+    if(it != allPCB.end())
+    {
+        this->allPCB.erase(it);
+    }
     delete runningPCB;
     runningPCB = NULL;
 }
@@ -134,7 +138,7 @@ bool ProcessManager::tryPreemp() {
 
         // old runningPCB back to readyQue
         readyQue.push(old);
-        old->setStatus(st_ready);
+        old->setStatus(ready);
 
         return true;
     }

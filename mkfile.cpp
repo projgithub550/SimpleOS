@@ -15,13 +15,25 @@ mkfile::~mkfile()
 
 void mkfile::on_pbt_save_clicked()
 {
-    QString name = ui->lineEdit->text();
+    QString name = ui->le_fname->text();
+    QString ftype = ui->le_ftype->text();
     QString content = ui->textEdit->toPlainText();
-    if(!FileManager::mkfile(name.toStdString(), content.toStdString())){
+    int ftype_num;
+    if(ftype=="TXT") {
+        ftype_num = 1;
+    } else if (ftype=="EXE") {
+        ftype_num = 2;
+    } else {
+        QMessageBox::warning(this, "Warning", "no such file type!");
+        return;
+    }
+
+    if(!FileManager::mkfile(name.toStdString(), content.toStdString(), ftype_num)){
         QMessageBox::warning(this, "Warning", "mkfile failed!");
     } else {
         // success
         this->close();
     }
 }
+
 

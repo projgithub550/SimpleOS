@@ -1,10 +1,13 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+vector<string> status2string = {"ready","running","blocked","dead"};
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
+
 /**********************UI*********************/
     ui->setupUi(this);
     buildAlloChart();
@@ -12,9 +15,12 @@ MainWindow::MainWindow(QWidget *parent)
     buildFauChart();
 /**********************UI*********************/
 
-    procManager = new ProcessManager;
-    cpu = new CPU;
+
+
     memManager = new MemoryManager;
+    cpu = new CPU(memManager);
+    procManager = new ProcessManager(cpu,memManager);
+
 
     // 初始化文件系统
     FileManager::InitFileSys();
@@ -27,9 +33,9 @@ MainWindow::MainWindow(QWidget *parent)
     cpu->moveToThread(cpuThread);
 
     // 创建若干个io device，并存入IO map
-    for(IOType t = std; t <= disk; t=(IOType)(t + 1))
+    for(IOType t = stdrd; t <= disk; t=(IOType)(t + 1))
     {
-        drivers[t] = new DeviceDriver(t);
+        drivers[t] = new DeviceDriver(t,memManager);
         QThread *IOThread = new QThread;
         IOMap[drivers[t]] = IOThread;
         drivers[t]->moveToThread(IOThread);
@@ -43,6 +49,7 @@ MainWindow::MainWindow(QWidget *parent)
     }
     procManager->setDrivers(this->drivers);
 
+    // begin listen signal
     procManThread->start();
     cpuThread->start();
 
@@ -79,27 +86,17 @@ void MainWindow::on_tabWidget_tabBarClicked(int index)
 void MainWindow::showProcTree() {
     ui->procTree->clear();
 
-    QVector<PCB*> allPCB = procManager->getAllPCB();
+    vector<PCB*> allPCB = procManager->getAllPCB();
     QList<QTreeWidgetItem*> treeItems;
 
     for(auto pcb : allPCB) {
         QTreeWidgetItem* tmp = new QTreeWidgetItem(ui->procTree);
         // add pcb'message
-        tmp->setData();
-
-        // set treeItem's color
-        tmp->setBackgroundColor(1,QColor("#FFF4C4"));
-        tmp->setBackgroundColor(4,QColor("#FFF4C4"));
-
-//        // add all its childPCB to this item's child树形添加子进程
-//        for(遍历该pcb的子进程) {
-//            QTreeWidgetItem* child = new QTreeWidgetItem(tmp);
-
-//            // 设置子进程信息
-//            chile->setData();
-
-//            tmp->addChild(child);
-//        }
+        tmp->setText(0, "file");      // EXE文件名
+        tmp->setText(1, QString::number(pcb->getPId()));
+        tmp->setText(2, "mem");      // 占用内存
+        tmp->setText(3, QString::number(pcb->getPriority()));
+        tmp->setText(4, QString::fromStdString(status2string[pcb->getStatus()]));
 
         // append to item list
         treeItems.append(tmp);
@@ -161,6 +158,7 @@ void MainWindow::on_fileTree_itemDoubleClicked(QTreeWidgetItem *item, int column
         if(!FileManager::rmfile(item->text(0).toStdString()))
             QMessageBox::warning(this, "Warning", "delete file failed!");
     }
+
 }
 
 // 单击进入
@@ -181,7 +179,7 @@ void MainWindow::on_fileTree_itemClicked(QTreeWidgetItem *item, int column)
     } else if(item->text(1)=="EXE") {
 
         // 使用exe文件信息创建进程
-        procManager->createProcess(...);
+        procManager->createProcess(file_name);
     }
 }
 
