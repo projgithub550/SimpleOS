@@ -123,7 +123,7 @@ bool FileManager::rmfile(string filename) {//	成功返回 1，不成功返回 0
 int FileManager::openFile(string filename) {
 	unsigned long int address = (unsigned long int)File::Open_File(filename);
 	int num = NumOfFile.size();
-	while (NumOfFile.find(num) == NumOfFile.end())
+	while (NumOfFile.find(num) != NumOfFile.end())
 		num++;
 	NumOfFile[num] = address;
 	return num;
