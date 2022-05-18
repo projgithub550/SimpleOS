@@ -6,15 +6,15 @@
 #include "file_dir.h"
 using namespace std;
 
-// dirÄ¿Â¼³õÊ¼»¯º¯Êı¡ª¡ª¡ª¡ªinit_dir(root_dir);³õÊ¼»¯¸ùÄ¿Â¼
+// dirç›®å½•åˆå§‹åŒ–å‡½æ•°â€”â€”â€”â€”init_dir(root_dir);åˆå§‹åŒ–æ ¹ç›®å½•
 void DIR::init_dir(dir blankdir[]) {
     for (int i = 0; i < DIR_FILE_NUM; i++) {
-        blankdir[i].file_name = "#";//³õÊ¼ÎÄ¼şÃûÎª#
+        blankdir[i].file_name = "#";//åˆå§‹æ–‡ä»¶åä¸º#
         blankdir[i].iNode_no = iNode_NUM + 1;
     }
 }
 
-// ÉèÖÃÄ¬ÈÏ²ÎÊıÊÇµ±Ç°Ä¿Â¼¡ª¡ª¡ª¡ªos_ls();ÁĞ³öµ±Ç°Ä¿Â¼ÏÂËùÓĞÎÄ¼şÃû³Æ
+// è®¾ç½®é»˜è®¤å‚æ•°æ˜¯å½“å‰ç›®å½•â€”â€”â€”â€”os_ls();åˆ—å‡ºå½“å‰ç›®å½•ä¸‹æ‰€æœ‰æ–‡ä»¶åç§°
 vector<pair<string, unsigned short>> DIR::os_ls() {
     vector<pair<string, unsigned short>> files;
     for (int i = 0; i < DIR_FILE_NUM && FileManager::current_dir[i].file_name != "#"; i++) {
@@ -24,8 +24,8 @@ vector<pair<string, unsigned short>> DIR::os_ls() {
     return files;
 }
 
-// ÇĞ»»Ä¿Â¼¡ª¡ª¡ª¡ªos_cd(newpath);´Óµ±Ç°Ä¿Â¼ÇĞ»»µ½newpathÏÂ
-// newpath == #¾ø¶ÔÂ·¾¶ #Ïà¶ÔÂ·¾¶ #..(ÉÏ²ãÄ¿Â¼)
+// åˆ‡æ¢ç›®å½•â€”â€”â€”â€”os_cd(newpath);ä»å½“å‰ç›®å½•åˆ‡æ¢åˆ°newpathä¸‹
+// newpath == #ç»å¯¹è·¯å¾„ #ç›¸å¯¹è·¯å¾„ #..(ä¸Šå±‚ç›®å½•)
 bool DIR::os_cd(string newpath) {
     int tmp_no = -1;
     if (newpath == "..") {
@@ -39,9 +39,9 @@ bool DIR::os_cd(string newpath) {
     dir* temp = fileTOOLS::analyse_Path(newpath);
     if (temp == NULL) {
         if (newpath[0] == '/')
-            cout << "ERROR¡ª¡ªÕÒ²»µ½ÕıÈ·µÄ¾ø¶ÔÂ·¾¶" << endl;
+            cout << "ERRORâ€”â€”æ‰¾ä¸åˆ°æ­£ç¡®çš„ç»å¯¹è·¯å¾„" << endl;
         else
-            cout << "ERROR¡ª¡ªÕÒ²»µ½ÕıÈ·µÄÏà¶ÔÂ·¾¶" << endl;
+            cout << "ERRORâ€”â€”æ‰¾ä¸åˆ°æ­£ç¡®çš„ç›¸å¯¹è·¯å¾„" << endl;
         return 0;
     }
     else {
@@ -50,28 +50,28 @@ bool DIR::os_cd(string newpath) {
     }
 }
 
-// É¾³ı¿ÕÄ¿Â¼¡ª¡ª¡ª¡ªos_rmdir(sondir);
+// åˆ é™¤ç©ºç›®å½•â€”â€”â€”â€”os_rmdir(sondir);
 bool DIR::os_rmdir(string dir_name) {
-    int f_i = fileTOOLS::find_son_pos(dir_name);//ÕÒµ½ÒªÉ¾³ıµÄÄ¿Â¼ÔÚÆä¸¸Ä¿Â¼µÄ±êºÅ 
+    int f_i = fileTOOLS::find_son_pos(dir_name);//æ‰¾åˆ°è¦åˆ é™¤çš„ç›®å½•åœ¨å…¶çˆ¶ç›®å½•çš„æ ‡å· 
     if (f_i == DIR_FILE_NUM + 1) {
-        cout << "ERROR¡ª¡ªÕÒ²»µ½ÕıÈ·µÄÎÄ¼ş»òÄ¿Â¼" << endl;
+        cout << "ERRORâ€”â€”æ‰¾ä¸åˆ°æ­£ç¡®çš„æ–‡ä»¶æˆ–ç›®å½•" << endl;
         return 0;
     }
     unsigned int find_iNode = (*(FileManager::current_dir + f_i)).iNode_no;
-    if (FileManager::iNode_table[find_iNode].i_mode == 1) {
-        cout << "ERROR¡ª¡ª¸ÃÎÄ¼şÎªÆÕÍ¨ÎÄ¼ş" << endl;
-        return 0; //ÆÕÍ¨ÎÄ¼ş£¬´íÎó
+    if (FileManager::iNode_table[find_iNode].i_mode != 0) {
+        cout << "ERRORâ€”â€”è¯¥æ–‡ä»¶ä¸ºæ™®é€šæ–‡ä»¶" << endl;
+        return 0; //æ™®é€šæ–‡ä»¶ï¼Œé”™è¯¯
     }
     dir* f_dir = (dir*)malloc(sizeof(dir) * DIR_FILE_NUM);
-    disk::get_dir(f_dir, &FileManager::iNode_table[find_iNode]);    //####´ÅÅÌ²¿·Ö
+    disk::get_dir(f_dir, &FileManager::iNode_table[find_iNode]);    //####ç£ç›˜éƒ¨åˆ†
     int i;
     for (i = 0; i < DIR_FILE_NUM && f_dir[i].iNode_no == iNode_NUM + 1; i++) {}
-    if (i == DIR_FILE_NUM) {//´ËÄ¿Â¼ÏÂÎŞÎÄ¼ş
+    if (i == DIR_FILE_NUM) {//æ­¤ç›®å½•ä¸‹æ— æ–‡ä»¶
         free(f_dir);
         return fileTOOLS::Delete_File(f_i);
     }
     else {
-        cout << "ERROR¡ª¡ª¸ÃÄ¿Â¼Îª·Ç¿ÕÄ¿Â¼" << endl;
+        cout << "ERRORâ€”â€”è¯¥ç›®å½•ä¸ºéç©ºç›®å½•" << endl;
         free(f_dir);
         return 0;
     }
