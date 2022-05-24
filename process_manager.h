@@ -28,6 +28,7 @@ class ProcessManager : public QObject
         void run2dead();
         void run2blocked();
         void blocked2ready(PCB* pcb);
+        void blocked2dead(PCB* pcb);
 
     private:
         static bool cmp(PCB* a, PCB* b) { return a->getPriority() < b->getPriority(); }
@@ -55,7 +56,6 @@ class ProcessManager : public QObject
         {
             return this->allPCB;
         }
-
 };
 
 #endif

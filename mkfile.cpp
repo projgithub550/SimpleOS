@@ -28,10 +28,14 @@ void mkfile::on_pbt_save_clicked()
         return;
     }
 
+
+   // qDebug() << ftype_num;
+   // qDebug() << content;
     if(!FileManager::mkfile(name.toStdString(), content.toStdString(), ftype_num)){
         QMessageBox::warning(this, "Warning", "mkfile failed!");
     } else {
         // success
+      //  qDebug() << "打开次数"<<File::Open_File(name.toStdString())->f_iNode->open_num;
         this->close();
     }
 }

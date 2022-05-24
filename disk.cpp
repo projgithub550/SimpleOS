@@ -45,8 +45,11 @@ bool disk::init_disk()
     }
 
     //root_dir根目录的初始化
-    dir root[DIR_FILE_NUM];
+//    dir root[DIR_FILE_NUM];
+    dir *root = new dir[DIR_FILE_NUM];
     DIR::init_dir(root);
+
+
     iNode root_iNode = File::Fill_in_iNode(0);//根目录对应节点
     for (int i = 0; i < FBLK_NUM; i++)
     {
@@ -54,6 +57,11 @@ bool disk::init_disk()
         *(bitmap + border + i + 1) = 1;//修改bitmap
     }
     *inode_table = root_iNode;//放入inode表
+
+//    qDebug()<<"root0:"<<sizeof(root[0]);
+//    qDebug()<<"root00:"<<sizeof(root[0].file_name);
+//    qDebug()<<"filename:"<<root[0].file_name;
+//    qDebug()<<"root01:"<<sizeof(root[0].iNode_no);
 
     //写入磁盘
     FILE* diskp = fopen(DISK, "rb+"); //读写打开一个二进制文件，只允许读写数据
@@ -67,6 +75,28 @@ bool disk::init_disk()
         fseek(diskp, root_iNode.block_address[i] * BLOCK_SIZE, SEEK_SET);//定位到root_dir的位置
         fwrite((char*)root + i * BLOCK_SIZE, BLOCK_SIZE, 1, diskp);
     }
+
+//    //刚写就读，测试正确性
+//    fclose(diskp);
+//    FILE* disk = fopen(DISK, "rb+"); //读写打开一个二进制文件，只允许读写数据
+
+//    dir* tmp = FileManager::root_dir;
+//    for (int i = 0; i < FBLK_NUM; i++) //读入root_dir根目录
+//    {
+//        qDebug()<<"read addr:"<<root_iNode.block_address[i] * BLOCK_SIZE;
+//        qDebug()<<"read ptr:"<<(char*)tmp + i * BLOCK_SIZE;
+
+//        fseek(disk, root_iNode.block_address[i] * BLOCK_SIZE, SEEK_SET);
+//        fread((char*)tmp + i * BLOCK_SIZE, BLOCK_SIZE, 1, disk);
+
+//        if(1) {
+//            qDebug()<<"first read:"<<i;
+//            for (int j = 0; j < DIR_FILE_NUM; j++) {
+//                qDebug()<<"j:"<<j<<"name:"<<(*(tmp + j)).file_name<<"inode:"<<(*(tmp + j)).iNode_no;
+//            }
+//        }
+//    }
+
     free(sb);
     free(inode_table);
     free(bitmap);
@@ -80,11 +110,12 @@ bool disk::start_disk()
     dir* temp_root = FileManager::root_dir;//临时根目录
     while (1)
     {
-        FILE* diskp = fopen(DISK, "rb");
         if (debug) {//	调试专用
+            qDebug()<<"debug";
             format_disk();
             init_disk();
         }
+        FILE* diskp = fopen(DISK, "rb+");
         if (diskp)
         {
             fseek(diskp, INODE_START * BLOCK_SIZE, SEEK_SET);//定位到inode表位置
@@ -93,12 +124,17 @@ bool disk::start_disk()
             {
                 fseek(diskp, FileManager::iNode_table[0].block_address[i] * BLOCK_SIZE, SEEK_SET);
                 fread((char*)temp_root + i * BLOCK_SIZE, BLOCK_SIZE, 1, diskp);
+
+                qDebug()<<"during read:"<<i;
+                for (int j = 0; j < DIR_FILE_NUM; j++) {
+                    qDebug() << "j:" << j <<"name:"<<(*(temp_root + j)).file_name << "inode:" << (*(temp_root + j)).iNode_no;
+                }
             }
+
             FileManager::current_dir = temp_root;
-            int j = 0;
             for (int j = 0; j < iNode_NUM; j++)
             {
-                if (FileManager::iNode_table[j].i_mode != 2)
+                if (FileManager::iNode_table[j].i_mode != 3)
                     FileManager::iNode_table[j].open_num = 0;
             }
             fclose(diskp);
@@ -223,6 +259,7 @@ int disk::os_writefile(void* v_buf, int size, os_file* fp)//传入参数：数�
     char* buf = (char*)malloc(size);
     memcpy(buf, v_buf, size); //拷贝
 
+
     total_block = (fp->f_pos + size) / BLOCK_SIZE + 1; //写入文件后文件的总block数
     if (total_block > FBLK_NUM)  //写入数据块数超出文件的最大块数
         return 0;
@@ -235,6 +272,7 @@ int disk::os_writefile(void* v_buf, int size, os_file* fp)//传入参数：数�
         offset = BLOCK_SIZE; //偏移为0且写数据块大于一 说明最后一块要写入一整块
 
     //检查是否需要将空闲块分配给文件
+    //qDebug() << "block 号：" << fp->f_iNode->block_address[2];
     for (int i = 0; i < total_block; i++)
     {
         if (fp->f_iNode->block_address[i] > MAX_BLOCK_NUM) //说明文件的第i块尚未被分配

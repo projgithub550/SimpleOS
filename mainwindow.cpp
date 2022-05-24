@@ -10,9 +10,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 /**********************UI*********************/
     ui->setupUi(this);
-    buildAlloChart();
-    buildMrChart();
-    buildFauChart();
+
 /**********************UI*********************/
 
 
@@ -45,7 +43,7 @@ MainWindow::MainWindow(QWidget *parent)
         connect(drivers[t], SIGNAL(tellManFinIO(PCB*)), procManager, SLOT(blocked2ready(PCB*)));
 
         //IO错误
-        connect(drivers[t],SIGNAL(tellError(PCB*)),procManager,SLOT(run2blocked()));
+        connect(drivers[t],SIGNAL(tellError(PCB*)),procManager,SLOT(blocked2dead(PCB*)));
     }
     procManager->setDrivers(this->drivers);
 
@@ -58,8 +56,17 @@ MainWindow::MainWindow(QWidget *parent)
     connect(cpu, SIGNAL(tellManDead()), procManager, SLOT(run2dead()));
     connect(cpu, SIGNAL(tellManBlocked()), procManager, SLOT(run2blocked()));
 
+    //内存信息展示
+    buildAlloChart();
+    buildMrChart();
+    buildFauChart();
+
     // 初始化proc列表信息
     showProcTree();
+    showFileTree();
+
+
+
 }
 
 MainWindow::~MainWindow()
@@ -92,27 +99,33 @@ void MainWindow::showProcTree() {
     for(auto pcb : allPCB) {
         QTreeWidgetItem* tmp = new QTreeWidgetItem(ui->procTree);
         // add pcb'message
-        tmp->setText(0, "file");      // EXE文件名
+        tmp->setText(0, QString::fromStdString(pcb->getWorkDir()));      // EXE文件名
         tmp->setText(1, QString::number(pcb->getPId()));
-        tmp->setText(2, "mem");      // 占用内存
-        tmp->setText(3, QString::number(pcb->getPriority()));
-        tmp->setText(4, QString::fromStdString(status2string[pcb->getStatus()]));
+        tmp->setText(2, QString::number(memManager->getProcPhyMem(pcb->getPId())));      // 占用实际内存
+        tmp->setText(3, QString::number(memManager->getProcVirMem(pcb->getPId())));      // 占用虚拟内存
+        tmp->setText(4, QString::number(pcb->getPriority()));
+        tmp->setText(5, QString::fromStdString(status2string[pcb->getStatus()]));
 
         // append to item list
         treeItems.append(tmp);
     }
     // add to tree widget
     ui->procTree->addTopLevelItems(treeItems);
+
 }
 
 //显示文件系统的tab
 void MainWindow::showFileTree() {
+//    for (int j = 0; j < DIR_FILE_NUM; j++) {qDebug()<<"j:"<<j<<"inode:"<<(*(FileManager::current_dir + j)).iNode_no;}
+
     ui->fileTree->clear();
 
     // 默认处于根目录
     QList<QTreeWidgetItem*> treeItems;
     vector<pair<string, unsigned short>> files = DIR::os_ls();
-    for(auto file : files) {
+    for(auto &file : files) {
+       // qDebug()<<QString::fromStdString(file.first)<<QString::number(file.second);
+      //  qDebug() << "打开次数"<<File::Open_File(file.first)->f_iNode->open_num;
         QTreeWidgetItem* tmp = new QTreeWidgetItem(ui->fileTree);
         if(file.second==0) {
             // dir
@@ -143,45 +156,59 @@ void MainWindow::showMemInfo() {
 
 }
 
-// 双击删除（弹出警示框是否删除）
+// 双击进入
 void MainWindow::on_fileTree_itemDoubleClicked(QTreeWidgetItem *item, int column)
 {
-    // 弹出警告框“是否继续”
-    int ret = QMessageBox::critical(this, tr("Warning!"), tr("you are tring to delete a file/dir!\nDo you want to continue?"),
-                  QMessageBox::Yes | QMessageBox::No,  QMessageBox::No);
-    if(ret==QMessageBox::No) return;
-    // 判断类型，删除
-    if(item->text(1)=="DIR") {
-        if(!FileManager::rmdir(item->text(0).toStdString()))
-            QMessageBox::warning(this, "Warning", "delete dir failed!");
-    } else {
-        if(!FileManager::rmfile(item->text(0).toStdString()))
-            QMessageBox::warning(this, "Warning", "delete file failed!");
-    }
-
-}
-
-// 单击进入
-void MainWindow::on_fileTree_itemClicked(QTreeWidgetItem *item, int column)
-{
+ //   qDebug() << "双击";
     string file_name = item->text(0).toStdString();
     // 判断是文件还是目录
     if(item->text(1)=="DIR") {
         // 调用cd，进入下一级
+        qDebug()<<"cd:"<<QString::fromStdString(file_name);
         FileManager::cd(file_name);
+        qDebug()<<"pwd:"<<QString::fromStdString(FileManager::pwd());
         showFileTree();
     } else if(item->text(1)=="TXT") {
 
         // 弹出窗口显示内容(可以修改)
         Editor editor(file_name);
-        editor.show();
+        editor.exec();
 
     } else if(item->text(1)=="EXE") {
 
         // 使用exe文件信息创建进程
+     //   qDebug() << "----------------------------------";
         procManager->createProcess(file_name);
     }
 }
+
+void MainWindow::on_fileTree_itemPressed(QTreeWidgetItem *item, int column)
+{
+    selected_item = item;
+  //  qDebug()<<selected_item->text(1);
+
+}
+
+void MainWindow::on_pbt_delete_clicked()
+{
+    qDebug()<<"delete:"<<selected_item->text(1);
+
+    // 弹出警告框“是否继续”
+    int ret = QMessageBox::critical(this, tr("Warning!"), tr("you are tring to delete a file/dir!\nDo you want to continue?"),
+                  QMessageBox::Yes | QMessageBox::No,  QMessageBox::No);
+    if(ret==QMessageBox::No) return;
+
+    // 判断类型，删除
+    if(selected_item->text(1)=="DIR") {
+        if(!FileManager::rmdir(selected_item->text(0).toStdString()))
+            QMessageBox::warning(this, "Warning", "delete dir failed!");
+    } else {
+        if(!FileManager::rmfile(selected_item->text(0).toStdString()))
+            QMessageBox::warning(this, "Warning", "delete file failed!");
+    }
+    showFileTree();
+}
+
 
 // 返回上一级
 void MainWindow::on_pbt_back_clicked()
@@ -194,13 +221,16 @@ void MainWindow::on_pbt_back_clicked()
 void MainWindow::on_pbt_mkdir_clicked()
 {
     mkdir mkdir_dialog;
-    mkdir_dialog.show();
+    mkdir_dialog.exec();
+    showFileTree();
 }
 
 void MainWindow::on_pbt_mkfile_clicked()
 {
     mkfile mkfile_dialog;
-    mkfile_dialog.show();
+    mkfile_dialog.exec();
+    showFileTree();
+
 }
 
 // 回车跳转
@@ -222,7 +252,8 @@ void MainWindow::on_le_path_returnPressed()
 // 双击进程展示其内存占用信息
 void MainWindow::on_procTree_itemDoubleClicked(QTreeWidgetItem *item, int column)
 {
-
+    ProcPageDialog dialog(item->text(1).toInt(), memManager);
+    dialog.exec();
 }
 
 // 初始化memchart
@@ -231,7 +262,8 @@ void MainWindow::buildAlloChart()
     //初始化数据成员
     alloMaxSize = 60; // 只存储最新的60个数据
     alloMaxX = 80;
-    alloMaxY = memManager->getTotalMem();
+    alloMaxY = (float)memManager->getTotalMem();
+ //   qDebug() <<"Y轴是-------------------------" <<alloMaxY;
     alloSplineSeries = new QSplineSeries();
     QPen pen(0x000001);
     pen.setWidth(1);
@@ -283,7 +315,7 @@ void MainWindow::buildMrChart()
     mrChart->addSeries(mrSplineSeries);         //添加数据源
     mrChart->addSeries(mrScatterSeries);        //添加数据源
     mrChart->legend()->hide();                //关闭图例
-    mrChart->setTitle("page fault曲线");
+    mrChart->setTitle("memory rate曲线");
     mrChart->createDefaultAxes();
 
     //上述方式已经被下面这种方式代替(推荐，不会报警告，但可读性不高)
@@ -344,7 +376,8 @@ void MainWindow::timerEvent(QTimerEvent *event)
 {
     if (event->timerId() == memTimerId) {
     /*********************allocate chart数据更新**************************/
-        float alloNew = memManager->getAllocatedMem();
+        float alloNew = (float)memManager->getAllocatedMem();
+      //  qDebug() << alloNew;
         allo_list << alloNew;
         // 数据个数超过了最大数量,删除首个，数据往前移，添加最后一个
         if (allo_list.size() > alloMaxSize) {
@@ -363,6 +396,7 @@ void MainWindow::timerEvent(QTimerEvent *event)
 
     /*********************mem_rate chart数据更新**************************/
         float mrNew = memManager->getMemRate();
+     //   qDebug() << mrNew;
         mr_list << mrNew;
         // 数据个数超过了最大数量,删除首个，数据往前移，添加最后一个
         if (mr_list.size() > mrMaxSize) {
@@ -381,6 +415,7 @@ void MainWindow::timerEvent(QTimerEvent *event)
 
     /*********************fault_rate chart数据更新**************************/
         float fauNew = memManager->getPageFaultRate();
+    //    qDebug() <<"缺页率：" <<fauNew;
         fau_list << fauNew;
         // 数据个数超过了最大数量,删除首个，数据往前移，添加最后一个
         if (fau_list.size() > fauMaxSize) {

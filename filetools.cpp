@@ -8,7 +8,7 @@ using namespace std;
 // 判断重名文件
 int fileTOOLS::same_name(string f_name, dir item[]) {
 	int i = 0;
-	for (i = 0; i < DIR_FILE_NUM && item[i].iNode_no != iNode_NUM + 1 && item[i].file_name != f_name; i++) {}
+    for (i = 0; i < DIR_FILE_NUM && item[i].iNode_no != iNode_NUM + 1 && item[i].file_name != QString::fromStdString(f_name); i++) {}
 	if (item[i].iNode_no == iNode_NUM + 1 || i == DIR_FILE_NUM)
 		return 0; //遍历一遍，没有重名
 	else
@@ -18,9 +18,12 @@ int fileTOOLS::same_name(string f_name, dir item[]) {
 // 根据父目录和子文件名称，找到子文件iNode的编号
 unsigned int fileTOOLS::find_son_iNode(string son_name, dir* father) {
 	int i;
-	for (i = 0; i < DIR_FILE_NUM && son_name != (*(father + i)).file_name; i++) {}
+    qDebug()<<"-----"<<QString::fromStdString(son_name);
+    for (i = 0; i < DIR_FILE_NUM && QString::fromStdString(son_name) != (*(father + i)).file_name; i++) {
+        qDebug()<<(*(father + i)).file_name;
+    }
 	if (i == DIR_FILE_NUM) {
-		cout << "ERROR——父目录下没有找到该文件" << endl;
+        qDebug() << "ERROR——父目录下没有找到该文件" << Qt::endl;
 		return iNode_NUM + 1;
 	}
 	return (*(father + i)).iNode_no;
@@ -29,9 +32,9 @@ unsigned int fileTOOLS::find_son_iNode(string son_name, dir* father) {
 // 从dir* FileManager::current_dir中查找到子文件在目录的位置（数组下标） 
 int fileTOOLS::find_son_pos(string f_name) {
 	int i;
-	for (i = 0; i < DIR_FILE_NUM && (*(FileManager::current_dir + i)).file_name != f_name; i++) {}
+    for (i = 0; i < DIR_FILE_NUM && (*(FileManager::current_dir + i)).file_name != QString::fromStdString(f_name); i++) {}
 	if (i == DIR_FILE_NUM) { //目录中没有该文件
-		cout << "ERROR——当前目录没有找到该文件位置" << endl;
+        qDebug() << "ERROR——当前目录没有找到该文件位置" << Qt::endl;
 		return DIR_FILE_NUM + 1;
 	}
 	return i;
@@ -70,13 +73,13 @@ dir* fileTOOLS::analyse_Path(string path) {
 	vector<string> working_dir;
 	vector<unsigned int> working_no;
 
-	if (path == "") {
+    if (path == "" || dirs.size()==0 || path == "/root") {
 		disk::get_dir(son_dir, &FileManager::iNode_table[FileManager::WorkingNo.top()]);	//返回当前目录的dir####磁盘部分
 		return son_dir;
 	}
 	else if (path[0] == '/') {// 绝对路径
 		if (dirs[0] != "root") {
-			cout << "ERROR——错误的绝对路径" << endl;
+            qDebug() << "ERROR——错误的绝对路径";
 			return NULL;
 		}
 		father_dir = FileManager::root_dir;
@@ -86,17 +89,18 @@ dir* fileTOOLS::analyse_Path(string path) {
 	}
 	else {//相对路径
 		father_dir = FileManager::current_dir;
+
 		i = 0;
 	}
 	for (i; i < dirs.size(); i++) {
 		son = dirs[i];
 		find_iNode = find_son_iNode(son, father_dir);//找到父目录下对应子文件iNode的标号
 		if (find_iNode == iNode_NUM + 1) {
-			cout << "ERROR——错误目录:" << son[i] << endl;
+            qDebug() << "ERROR——错误目录:" << son[i] << Qt::endl;
 			return NULL;
 		}
-		if (FileManager::iNode_table[find_iNode].i_mode == 1) {
-			cout << "ERROR——这不是一个目录" << endl;
+        if (FileManager::iNode_table[find_iNode].i_mode != 0) {
+            qDebug() << "ERROR——这不是一个目录" << Qt::endl;
 			return NULL;
 		}
 		//返回son文件的dir文件目录项数组son_dir####磁盘部分
@@ -138,16 +142,23 @@ void fileTOOLS::format_iNode(iNode* oldiNode) {
 
 // 删除文件
 int fileTOOLS::Delete_File(int f_i) {
-	unsigned int crt_no = (*(FileManager::current_dir + f_i)).iNode_no;
-	iNode crt_inode = FileManager::iNode_table[crt_no];
+//	unsigned int crt_no = (*(FileManager::current_dir + f_i)).iNode_no;
+//	iNode crt_inode = FileManager::iNode_table[crt_no];
+    iNode crt_inode = FileManager::iNode_table[FileManager::WorkingNo.top()];
 	//格式化要删除的文件的iNode
 	format_iNode(FileManager::iNode_table + (*(FileManager::current_dir + f_i)).iNode_no);
 	//调整要删除的文件的所在目录（后面的文件前移）
 	int j;
-	for (j = f_i; j < DIR_FILE_NUM && (*(FileManager::current_dir + j)).iNode_no != iNode_NUM + 1; j++) {
-		(*(FileManager::current_dir + j)).file_name = (*(FileManager::current_dir + j + 1)).file_name;
-		(*(FileManager::current_dir + j)).iNode_no = (*(FileManager::current_dir + j + 1)).iNode_no;
-	}
+    for (j = f_i; j < DIR_FILE_NUM && (*(FileManager::current_dir + j)).iNode_no != iNode_NUM + 1; j++) {
+        if (j == DIR_FILE_NUM - 1) {
+            (*(FileManager::current_dir + j)).file_name = "#";
+            (*(FileManager::current_dir + j)).iNode_no = iNode_NUM + 1;
+        }
+        else {
+            (*(FileManager::current_dir + j)).file_name = (*(FileManager::current_dir + j + 1)).file_name;
+            (*(FileManager::current_dir + j)).iNode_no = (*(FileManager::current_dir + j + 1)).iNode_no;
+        }
+    }
 	//buf保存当前目录的内容
 	char* buf = (char*)malloc(sizeof(dir) * DIR_FILE_NUM);
 	memcpy(buf, FileManager::current_dir, sizeof(dir) * DIR_FILE_NUM);

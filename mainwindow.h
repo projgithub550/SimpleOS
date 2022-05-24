@@ -26,8 +26,11 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
-QT_CHARTS_USE_NAMESPACE
-
+//QT_CHARTS_USE_NAMESPACE
+QT_BEGIN_NAMESPACE
+class QChartView;
+class QChart;
+QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow
 {
@@ -54,8 +57,6 @@ private slots:
 
     void on_fileTree_itemDoubleClicked(QTreeWidgetItem *item, int column);
 
-    void on_fileTree_itemClicked(QTreeWidgetItem *item, int column);
-
     void on_pbt_back_clicked();
 
     void on_pbt_mkdir_clicked();
@@ -65,6 +66,10 @@ private slots:
     void on_pbt_mkfile_clicked();
 
     void on_procTree_itemDoubleClicked(QTreeWidgetItem *item, int column);
+
+    void on_fileTree_itemPressed(QTreeWidgetItem *item, int column);
+
+    void on_pbt_delete_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -77,6 +82,8 @@ private:
 
     QThread *cpuThread;
     QThread *procManThread;
+
+    QTreeWidgetItem* selected_item;
 
 
     /**************allo chart对应的数据**************/

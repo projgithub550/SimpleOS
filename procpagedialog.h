@@ -2,6 +2,7 @@
 #define PROCPAGEDIALOG_H
 
 #include <QDialog>
+#include "memory.h"
 
 namespace Ui {
 class ProcPageDialog;
@@ -13,6 +14,8 @@ class ProcPageDialog : public QDialog
 
 public:
     explicit ProcPageDialog(QWidget *parent = nullptr);
+    explicit ProcPageDialog(int PID, MemoryManager *memManager, QWidget *parent = nullptr);
+
     ~ProcPageDialog();
 
 private:

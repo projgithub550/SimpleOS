@@ -1,4 +1,5 @@
 #include "cpu.h"
+#include <QThread>
 
 CPU::CPU(MemoryManager* m)
 {
@@ -15,17 +16,23 @@ void CPU::executePCB()
 
     int NextState = NEXT;
 
+    qDebug() << "cpu is running";
+    int i = 1;
     while (NextState == NEXT)
     {
+        qDebug() << "进程"<<runningPCB->getPId()<<"正在取第"<<i<<"条指令";
         NextState = fetchInstruction();
         if (NextState == NEXT)
         {
             NextState = executeInstruction();
         }
+        i ++;
+//        qDebug() << "执行完next_state为" << NextState;
     }
 
     if (NextState == END) // 正常结束
     {
+       // qDebug() << "cpu正常结束";
         runningPCB->setEvent(normal);
     }
     else if (NextState == BLOCK_DISK) // 缺页中断发生
@@ -37,6 +44,8 @@ void CPU::executePCB()
     {
         runningPCB->setEvent(disk_io);
     }
+
+    this->saveContext();
     finishPCB();
 }
 
@@ -60,12 +69,28 @@ void CPU::saveContext()
 
 int CPU::fetchInstruction() // 每次返回一个16位指令
 {
-    if(mmgr->readMem(runningPCB->getPId(), PC, 2, (int *)&IR)==0)
+
+    QThread::sleep(3);
+//    qDebug() << PC;
+    char temp[6];
+    if(mmgr->readMem(runningPCB->getPId(), PC, 6, temp)==invalid_value)
     {
+        qDebug() << "invalid";
         runningPCB->setStartAddr(PC);
         return BLOCK_DISK;
     }
-    PC += 2;
+
+    char temp2[6];
+    int i;
+    for(i = 0; temp[i] != '\n' && temp[i] != '\0'; i ++)
+    {
+        temp2[i] =  temp[i];
+    }
+    temp2[i] = '\0';
+    this->IR = atoi(temp2);
+    qDebug() << "ir = " << IR;
+    PC += i + 1;
+
     return NEXT;
 }
 
@@ -75,8 +100,10 @@ int CPU::executeInstruction()
     int RegA = (int)((IR & 0x1c00) >> 10);
     int RegB = (int)((IR & 0x0380) >> 7);
     int RegC = (int)((IR & 0x0007));
-    int ImmS = (int)((IR & 0x007f));
+    int ImmS = ((int)((IR & 0x007f)) > 63 ? (int)(IR & 0x007f) - 128 : (int)(IR & 0x007f));
     int ImmU = (int)((IR & 0x03ff));
+
+
 
     switch (OpCode)
     {
@@ -104,7 +131,7 @@ int CPU::executeInstruction()
         }
         break;
     case 5:
-    {
+    {   
         if (mmgr->readMem(runningPCB->getPId(), getReg(RegB) + ImmS, 2, (void *)&Reg[RegA]) == BLOCK)
         {
             runningPCB->setStartAddr(getReg(RegB) + ImmS);
@@ -115,7 +142,7 @@ int CPU::executeInstruction()
     }
     case 6:
         if (getReg(RegA) == getReg(RegB))
-            PC += (1 + ImmS);
+            PC += ImmS;
         break;
     case 7:
         if ((getReg(RegA) == 0) && (getReg(RegB) == 0))
@@ -129,7 +156,7 @@ int CPU::executeInstruction()
         }
         else
         {
-            Reg[RegA] = PC + 1;
+            Reg[RegA] = PC;
             PC = getReg(RegB);
         }
         break;
@@ -142,9 +169,11 @@ void CPU::finishPCB()
     switch (runningPCB->getEvent())
     {
     case normal:
+ //       qDebug() << "dead";
         emit tellManDead();
         break;
     default:
+    //    qDebug() << "blocked";
         emit tellManBlocked();
         break;
     }

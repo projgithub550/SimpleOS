@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QMessageBox>
+#include <iostream>
 
 #include "file_dir.h"
 
@@ -24,7 +25,7 @@ private slots:
 
 private:
     Ui::Editor *ui;
-    QString file_name;
+    string file_name;
     int file_num;
     QString content;
 };

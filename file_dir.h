@@ -1,12 +1,12 @@
 ﻿#ifndef FILE_DIR_H
 #define FILE_DIR_H
 
-#include <iostream>
 #include <string>
 #include <vector>
 #include <stack>
 #include <map>
 #include <malloc.h>
+#include <QDebug>
 
 #include "constant.h"
 
@@ -24,7 +24,7 @@ typedef struct INODE {		// iNode
 }iNode;
 
 typedef struct directory {	// 文件目录项结构：当前目录下一系列的文件列表
-    string file_name;   //文件名称
+    QString file_name;   //文件名称
     unsigned int iNode_no;  //iNode编号
 }dir;
 
@@ -96,7 +96,7 @@ class FileManager {
 public:
     // 全局变量
     static iNode iNode_table[iNode_NUM];  //iNode table的数组，数组下标对应iNode编号
-    static dir root_dir[MAX_FILE_NUM];    //根目录 数组实现  往下的每个子目录也是dir类型的数组，每一项是一个文件目录项
+    static dir root_dir[DIR_FILE_NUM];    //根目录 数组实现  往下的每个子目录也是dir类型的数组，每一项是一个文件目录项
     static dir* current_dir;			  //保存每次更新analyse_path返回的dir数组，即当前目录的dir数组
     static stack<string> WorkingDir;	  //记录路径名称
     static stack<unsigned int> WorkingNo; //记录路径上i节点的标号

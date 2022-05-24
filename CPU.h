@@ -6,6 +6,7 @@
 #include "pcb.h"
 #include "memory.h"
 #include "constant.h"
+#include <cstdlib>
 
 class CPU : public QObject
 {
@@ -13,6 +14,10 @@ class CPU : public QObject
 signals:
     void tellManDead();
     void tellManBlocked();
+
+public slots:
+    void executePCB();		 // 执行PCB
+
 
 private:
     // 在执行读写文件操作前准备如下：[7]存储读写意图，[0]存储文件句柄，[6]存储读取大小，[5]存储开始地址
@@ -38,7 +43,6 @@ public:
     void recoverContext(); // 恢复现场
     void saveContext(); // 保存现场
 
-    void executePCB();		 // 执行PCB
     void finishPCB();		 // 结束PCB
 
     int fetchInstruction(); // 获取指令

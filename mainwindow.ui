@@ -36,7 +36,7 @@
         <x>0</x>
         <y>0</y>
         <width>791</width>
-        <height>471</height>
+        <height>351</height>
        </rect>
       </property>
       <column>
@@ -51,7 +51,12 @@
       </column>
       <column>
        <property name="text">
-        <string>占用内存</string>
+        <string>占用实际内存</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>占用虚拟内存</string>
        </property>
       </column>
       <column>
@@ -70,6 +75,75 @@
        </property>
       </column>
      </widget>
+     <widget class="QLabel" name="lb_running">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>370</y>
+        <width>61</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>运行进程：</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="lb_ready">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>410</y>
+        <width>71</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>就绪进程：</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="lb_blocked">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>440</y>
+        <width>71</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>阻塞进程：</string>
+      </property>
+     </widget>
+     <widget class="QTextBrowser" name="tb_running">
+      <property name="geometry">
+       <rect>
+        <x>90</x>
+        <y>360</y>
+        <width>231</width>
+        <height>31</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QTextBrowser" name="tb_ready">
+      <property name="geometry">
+       <rect>
+        <x>90</x>
+        <y>400</y>
+        <width>231</width>
+        <height>31</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QTextBrowser" name="tb_blocked">
+      <property name="geometry">
+       <rect>
+        <x>90</x>
+        <y>440</y>
+        <width>231</width>
+        <height>31</height>
+       </rect>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="fileTab">
      <attribute name="title">
@@ -79,9 +153,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
+        <y>30</y>
         <width>801</width>
-        <height>471</height>
+        <height>441</height>
        </rect>
       </property>
       <column>
@@ -94,16 +168,6 @@
         <string>类型</string>
        </property>
       </column>
-      <item>
-       <property name="text">
-        <string>dir</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>file.txt</string>
-       </property>
-      </item>
      </widget>
      <widget class="QPushButton" name="pbt_back">
       <property name="geometry">
@@ -121,7 +185,7 @@
      <widget class="QPushButton" name="pbt_mkdir">
       <property name="geometry">
        <rect>
-        <x>560</x>
+        <x>490</x>
         <y>0</y>
         <width>71</width>
         <height>21</height>
@@ -134,7 +198,7 @@
      <widget class="QPushButton" name="pbt_mkfile">
       <property name="geometry">
        <rect>
-        <x>650</x>
+        <x>580</x>
         <y>0</y>
         <width>61</width>
         <height>21</height>
@@ -147,11 +211,24 @@
      <widget class="QLineEdit" name="le_path">
       <property name="geometry">
        <rect>
-        <x>180</x>
+        <x>0</x>
         <y>0</y>
-        <width>341</width>
+        <width>461</width>
         <height>21</height>
        </rect>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pbt_delete">
+      <property name="geometry">
+       <rect>
+        <x>660</x>
+        <y>0</y>
+        <width>61</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>删除</string>
       </property>
      </widget>
     </widget>

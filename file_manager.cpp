@@ -18,40 +18,40 @@ bool isExit;	//	文件内部测试所用，之后可以删掉。
 
 void FileManager::InitFileSys() {
     /*  首先激活磁盘（包括格式化和初始化）
-    /*  磁盘格式化时会建立模拟磁盘文件
-    /*  磁盘初始化时会初始化超级块、初始化iNode表、初始化位图、初始化目录表，最后写入磁盘   */
-    debug = 0;	// debug = 1 时每次启动初始化磁盘
+    *  磁盘格式化时会建立模拟磁盘文件
+    *  磁盘初始化时会初始化超级块、初始化iNode表、初始化位图、初始化目录表，最后写入磁盘   */
+    debug = 1;
     disk::start_disk();
     /*  初始化当前工作环境  */
     WorkingDir.push("root"); // 当前工作目录为root之下
     WorkingNo.push(0);  //  root目录的i节点号为0
 }
 
-//vector<pair<string, unsigned short>>
- bool FileManager::ls() {
-    //return DIR::os_ls();
-    vector<pair<string, unsigned short>> fileList = DIR::os_ls();
-    vector<pair<string, unsigned short>>::iterator it = fileList.begin();
-    cout << "  " << left << setw(7) << "TYPE    NAME" << endl;
-    while (it != fileList.end()) {
-        cout << "  ";
-        if ((*it).second == 0)
-            cout << left <<  setw(9) << "DIR ：";
-        else if (it->second == 1)
-            cout << left << setw(9) << "TXT ：";
-        else if(it->second == 2){
-            cout << left << setw(9) << "EXE ：";
-        }
-        else {
-            cout << "FILETYPE ERROR" << it->first << endl;
-            return false;
-        }
-        cout << it->first << endl;
-        it++;
-    }
-    return true;
+////vector<pair<string, unsigned short>>
+// bool FileManager::ls() {
+//    //return DIR::os_ls();
+//    vector<pair<string, unsigned short>> fileList = DIR::os_ls();
+//    vector<pair<string, unsigned short>>::iterator it = fileList.begin();
+//    qDebug() << "  " << left << setw(7) << "TYPE    NAME" << Qt::endl;
+//    while (it != fileList.end()) {
+//        qDebug() << "  ";
+//        if ((*it).second == 0)
+//            qDebug() << left <<  setw(9) << "DIR ：";
+//        else if (it->second == 1)
+//            qDebug() << left << setw(9) << "TXT ：";
+//        else if(it->second == 2){
+//            qDebug() << left << setw(9) << "EXE ：";
+//        }
+//        else {
+//            qDebug() << "FILETYPE ERROR" << it->first << Qt::endl;
+//            return false;
+//        }
+//        qDebug() << it->first << Qt::endl;
+//        it++;
+//    }
+//    return true;
 
-}
+//}
 
 string FileManager::pwd() {	//	显示当前所在路径
     return displayPath(1);
@@ -64,7 +64,7 @@ bool FileManager::cd(string dirname) {//	成功返回 1，不成功返回 0
 string FileManager::cat(string filename){	//	打开txt文件，并打印显示
     os_file* fp = File::Open_File(filename);
     if (!fp){
-        cout << "open file error\n" << endl;
+        qDebug() << "open file error\n" << Qt::endl;
         return "open file error";
     }
     int fileSize = disk::get_filesize(fp);
@@ -74,7 +74,7 @@ string FileManager::cat(string filename){	//	打开txt文件，并打印显示
         File::Close_File(fp);
         return (string)dst;
     }
-    cout << "fread error" << endl;
+    qDebug() << "fread error" << Qt::endl;
     File::Close_File(fp);
     return "read file error";
 }
@@ -91,17 +91,22 @@ bool FileManager::mkdir(string dirname) {//	成功返回 1，不成功返回 0
 bool FileManager::mkfile(string filename, string content,unsigned short f_type) {//	成功返回 T，不成功返回 F
     if (!File::Create_File(filename, f_type))
         return false;
-
+   // qDebug() << "1111";
     os_file* fp = File::Open_File(filename);
+
+
     if (!fp)
         return false;
-
-    if (disk::os_writefile((char*)content.c_str(), content.size(), fp)) {
+    // qDebug() << "222";
+    if (disk::os_writefile((char *)content.c_str(), content.size()+1, fp))
+    {
+     //   qDebug() << "333";
         File::Close_File(fp);
         return true;
     }
     else {
         File::Close_File(fp);
+     //   qDebug() << "333";
         return false;
     }
 }
@@ -118,9 +123,10 @@ bool FileManager::rmfile(string filename) {//	成功返回 1，不成功返回 0
 }
 
 int FileManager::openFile(string filename) {
-    unsigned long int address = (unsigned long int)File::Open_File(filename);
+    os_file* addr = File::Open_File(filename);
+    unsigned long int address = (long long)(addr);
     int num = NumOfFile.size();
-    while (NumOfFile.find(num) == NumOfFile.end())
+    while (NumOfFile.find(num) != NumOfFile.end())
         num++;
     NumOfFile[num] = address;
     return num;
@@ -164,7 +170,7 @@ int FileManager::readFile(int filenum, int size, void* v_buf)//面向进程的�
 int FileManager::writeFile(int filenum, int size, void* v_buf)//面向进程的写文件接口
 {
     os_file* fp = (os_file*)NumOfFile[filenum];
-    return disk::os_writefile(v_buf, size, fp);
+    return disk::os_writefile(v_buf, size+1, fp);
 
 }
 
@@ -189,7 +195,7 @@ string FileManager::displayPath(int flag) {
         path += *it;
     }
     if (!flag) {
-        cout << path << " $ ";
+        qDebug() << QString::fromStdString(path) << " $ ";
         return "1";
     }
     else
@@ -306,7 +312,7 @@ string FileManager::displayPath(int flag) {
 //}
 
 iNode FileManager::iNode_table[iNode_NUM];  //iNode table的数组，数组下标对应iNode编号
-dir FileManager::root_dir[MAX_FILE_NUM];    //根目录 数组实现  往下的每个子目录也是dir类型的数组，每一项是一个文件目录项
+dir FileManager::root_dir[DIR_FILE_NUM];    //根目录 数组实现  往下的每个子目录也是dir类型的数组，每一项是一个文件目录项
 dir* FileManager::current_dir;				//保存每次更新analyse_path返回的dir数组，即当前目录的dir数组
 stack<string> FileManager::WorkingDir;		//记录路径名称
 stack<unsigned int> FileManager::WorkingNo; //记录路径上i节点的标号

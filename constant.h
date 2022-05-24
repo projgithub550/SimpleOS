@@ -5,6 +5,7 @@
 #include<string>
 #include<map>
 #include<queue>
+#include<QDebug>
 
 using namespace std;
 
@@ -62,15 +63,16 @@ enum IOType
 #define invalid_value -1
 #define Valid 1
 
-#define page_size 1024//页大小
-#define occupancy 16 //页表实际占用的页
+#define page_size 64//页大小
+#define occupancy 8 //页表实际占用的页
 
-#define max_page_number 64 //虚拟页表最多含有的页
+#define max_page_number 16 //虚拟页表最多含有的页
+#define maxa_page_number 1024 //理论上页表最多含有的页
 #define q_max_page_number 16 //快表最多含有的页
 #define schedule_queue_length 16 //调度队列
 
 //filesystem
-#define BLOCK_SIZE 1024		//磁盘块大小\数据块大小 64字节#####改成了1024
+#define BLOCK_SIZE 64		//磁盘块大小\数据块大小 64字节#####改成了1024
 #define MAX_FILE_NUM 256	//最大文件数量，也是最大inode的数量
 #define MAX_BLOCK_NUM 1024	//最大磁盘块数量，即磁盘总容量
 #define MAX_FILE_SIZE 256	//最大文件长度，256字节，占四个磁盘块
