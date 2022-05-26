@@ -8,12 +8,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
 
-/**********************UI*********************/
     ui->setupUi(this);
-
-/**********************UI*********************/
-
-
 
     memManager = new MemoryManager;
     cpu = new CPU(memManager);
@@ -47,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
     }
     procManager->setDrivers(this->drivers);
 
+
     // begin listen signal
     procManThread->start();
     cpuThread->start();
@@ -54,19 +50,16 @@ MainWindow::MainWindow(QWidget *parent)
     // 绑定多线程之间的信号关系
     connect(procManager, SIGNAL(tellCPUExec()), cpu, SLOT(executePCB()));
     connect(cpu, SIGNAL(tellManDead()), procManager, SLOT(run2dead()));
+    connect(cpu, SIGNAL(tellManFork(PCB*)), procManager, SLOT(forkProcess(PCB*)));
     connect(cpu, SIGNAL(tellManBlocked()), procManager, SLOT(run2blocked()));
 
-    //内存信息展示
     buildAlloChart();
-    buildMrChart();
+//    buildMrChart();
     buildFauChart();
 
     // 初始化proc列表信息
     showProcTree();
     showFileTree();
-
-
-
 }
 
 MainWindow::~MainWindow()
@@ -109,8 +102,34 @@ void MainWindow::showProcTree() {
         // append to item list
         treeItems.append(tmp);
     }
+
     // add to tree widget
     ui->procTree->addTopLevelItems(treeItems);
+
+//    QString readyStr;
+//    QString runningStr;
+//    QString blockedStr;
+    ui->tb_blocked->clear();
+    ui->tb_ready->clear();
+    ui->tb_running->clear();
+    for(auto pcb : allPCB)
+    {
+        switch(pcb->getStatus())
+        {
+            case ready:
+                ui->tb_ready->insertPlainText(QString::number(pcb->getPId()) + " ");
+                break;
+            case running:
+                ui->tb_running->insertPlainText(QString::number(pcb->getPId()) + " ");
+                break;
+            case blocked:
+                ui->tb_blocked->insertPlainText(QString::number(pcb->getPId()) + " ");
+                break;
+            default:
+                break;
+        }
+    }
+
 
 }
 
@@ -124,8 +143,7 @@ void MainWindow::showFileTree() {
     QList<QTreeWidgetItem*> treeItems;
     vector<pair<string, unsigned short>> files = DIR::os_ls();
     for(auto &file : files) {
-       // qDebug()<<QString::fromStdString(file.first)<<QString::number(file.second);
-      //  qDebug() << "打开次数"<<File::Open_File(file.first)->f_iNode->open_num;
+        qDebug()<<QString::fromStdString(file.first)<<QString::number(file.second);
         QTreeWidgetItem* tmp = new QTreeWidgetItem(ui->fileTree);
         if(file.second==0) {
             // dir
@@ -159,7 +177,6 @@ void MainWindow::showMemInfo() {
 // 双击进入
 void MainWindow::on_fileTree_itemDoubleClicked(QTreeWidgetItem *item, int column)
 {
- //   qDebug() << "双击";
     string file_name = item->text(0).toStdString();
     // 判断是文件还是目录
     if(item->text(1)=="DIR") {
@@ -177,7 +194,6 @@ void MainWindow::on_fileTree_itemDoubleClicked(QTreeWidgetItem *item, int column
     } else if(item->text(1)=="EXE") {
 
         // 使用exe文件信息创建进程
-     //   qDebug() << "----------------------------------";
         procManager->createProcess(file_name);
     }
 }
@@ -185,7 +201,7 @@ void MainWindow::on_fileTree_itemDoubleClicked(QTreeWidgetItem *item, int column
 void MainWindow::on_fileTree_itemPressed(QTreeWidgetItem *item, int column)
 {
     selected_item = item;
-  //  qDebug()<<selected_item->text(1);
+    qDebug()<<selected_item->text(1);
 
 }
 
@@ -230,7 +246,6 @@ void MainWindow::on_pbt_mkfile_clicked()
     mkfile mkfile_dialog;
     mkfile_dialog.exec();
     showFileTree();
-
 }
 
 // 回车跳转
@@ -262,11 +277,11 @@ void MainWindow::buildAlloChart()
     //初始化数据成员
     alloMaxSize = 60; // 只存储最新的60个数据
     alloMaxX = 80;
-    alloMaxY = (float)memManager->getTotalMem();
- //   qDebug() <<"Y轴是-------------------------" <<alloMaxY;
+    alloMaxY = memManager->getTotalMem();
+    qDebug() << "total mem:" << alloMaxY;
     alloSplineSeries = new QSplineSeries();
     QPen pen(0x000001);
-    pen.setWidth(1);
+    pen.setWidth(5);
     alloSplineSeries->setPen(pen);              //设置画笔颜色和大小
 
     alloScatterSeries = new QScatterSeries();
@@ -282,10 +297,8 @@ void MainWindow::buildAlloChart()
 
     //上述方式已经被下面这种方式代替(推荐，不会报警告，但可读性不高)
     alloChart->axes(Qt::Horizontal).back()->setRange(0, alloMaxX);
-    alloChart->axes(Qt::Horizontal).back()->setGridLineVisible(false);
-    alloChart->axes(Qt::Horizontal).back()->setTitleText("X轴");
+    alloChart->axes(Qt::Horizontal).back()->setTitleText("时间/秒");
     alloChart->axes(Qt::Vertical).back()->setRange(0, alloMaxY);
-    alloChart->axes(Qt::Vertical).back()->setGridLineVisible(false);
     alloChart->axes(Qt::Vertical).back()->setTitleText("内存占用");
 
     //为chart对象实例化一个Qchartview
@@ -304,7 +317,7 @@ void MainWindow::buildMrChart()
     mrMaxY = 1;
     mrSplineSeries = new QSplineSeries();
     QPen pen(0x000001);
-    pen.setWidth(1);
+    pen.setWidth(5);
     mrSplineSeries->setPen(pen);              //设置画笔颜色和大小
 
     mrScatterSeries = new QScatterSeries();
@@ -315,16 +328,14 @@ void MainWindow::buildMrChart()
     mrChart->addSeries(mrSplineSeries);         //添加数据源
     mrChart->addSeries(mrScatterSeries);        //添加数据源
     mrChart->legend()->hide();                //关闭图例
-    mrChart->setTitle("memory rate曲线");
+    mrChart->setTitle("page fault曲线");
     mrChart->createDefaultAxes();
 
     //上述方式已经被下面这种方式代替(推荐，不会报警告，但可读性不高)
     mrChart->axes(Qt::Horizontal).back()->setRange(0, mrMaxX);
-    mrChart->axes(Qt::Horizontal).back()->setGridLineVisible(false);
-    mrChart->axes(Qt::Horizontal).back()->setTitleText("X轴");
+    mrChart->axes(Qt::Horizontal).back()->setTitleText("时间/秒");
     mrChart->axes(Qt::Vertical).back()->setRange(0, mrMaxY);
-    mrChart->axes(Qt::Vertical).back()->setGridLineVisible(false);
-    mrChart->axes(Qt::Vertical).back()->setTitleText("内存占用");
+    mrChart->axes(Qt::Vertical).back()->setTitleText("内存占用率");
 
     //为chart对象实例化一个Qchartview
     mrChartView = new QChartView(mrChart);
@@ -342,7 +353,7 @@ void MainWindow::buildFauChart()
     fauMaxY = 1;
     fauSplineSeries = new QSplineSeries();
     QPen pen(0x000001);
-    pen.setWidth(1);
+    pen.setWidth(5);
     fauSplineSeries->setPen(pen);              //设置画笔颜色和大小
 
     fauScatterSeries = new QScatterSeries();
@@ -353,16 +364,14 @@ void MainWindow::buildFauChart()
     fauChart->addSeries(fauSplineSeries);         //添加数据源
     fauChart->addSeries(fauScatterSeries);        //添加数据源
     fauChart->legend()->hide();                //关闭图例
-    fauChart->setTitle("fault rate曲线");
+    fauChart->setTitle("缺页率曲线");
     fauChart->createDefaultAxes();
 
     //上述方式已经被下面这种方式代替(推荐，不会报警告，但可读性不高)
     fauChart->axes(Qt::Horizontal).back()->setRange(0, fauMaxX);
-    fauChart->axes(Qt::Horizontal).back()->setGridLineVisible(false);
-    fauChart->axes(Qt::Horizontal).back()->setTitleText("X轴");
+    fauChart->axes(Qt::Horizontal).back()->setTitleText("时间/秒");
     fauChart->axes(Qt::Vertical).back()->setRange(0, fauMaxY);
-    fauChart->axes(Qt::Vertical).back()->setGridLineVisible(false);
-    fauChart->axes(Qt::Vertical).back()->setTitleText("内存占用");
+    fauChart->axes(Qt::Vertical).back()->setTitleText("缺页率");
 
     //为chart对象实例化一个Qchartview
     fauChartView = new QChartView(fauChart);
@@ -374,10 +383,12 @@ void MainWindow::buildFauChart()
 // 定时器事件
 void MainWindow::timerEvent(QTimerEvent *event)
 {
+
     if (event->timerId() == memTimerId) {
+        this->showProcTree();
     /*********************allocate chart数据更新**************************/
-        float alloNew = (float)memManager->getAllocatedMem();
-      //  qDebug() << alloNew;
+        float alloNew = memManager->getAllocatedMem();
+        //qDebug() << "---------------" << alloNew;
         allo_list << alloNew;
         // 数据个数超过了最大数量,删除首个，数据往前移，添加最后一个
         if (allo_list.size() > alloMaxSize) {
@@ -396,26 +407,24 @@ void MainWindow::timerEvent(QTimerEvent *event)
 
     /*********************mem_rate chart数据更新**************************/
         float mrNew = memManager->getMemRate();
-     //   qDebug() << mrNew;
-        mr_list << mrNew;
-        // 数据个数超过了最大数量,删除首个，数据往前移，添加最后一个
-        if (mr_list.size() > mrMaxSize) {
-            mr_list.pop_front();
-        }
-        //清空数据
-        mrSplineSeries->clear();
-        mrScatterSeries->clear();
+//        mr_list << mrNew;
+//        // 数据个数超过了最大数量,删除首个，数据往前移，添加最后一个
+//        if (mr_list.size() > mrMaxSize) {
+//            mr_list.pop_front();
+//        }
+//        //清空数据
+//        mrSplineSeries->clear();
+//        mrScatterSeries->clear();
 
-        //以1为步长
-        for (int i = 0; i < mr_list.size(); ++i) {
-            mrSplineSeries->append(i, mr_list.at(i));
-            mrScatterSeries->append(i, mr_list.at(i));
-        }
+//        //以1为步长
+//        for (int i = 0; i < mr_list.size(); ++i) {
+//            mrSplineSeries->append(i, mr_list.at(i));
+//            mrScatterSeries->append(i, mr_list.at(i));
+//        }
     /*********************mem_rate chart数据更新**************************/
 
     /*********************fault_rate chart数据更新**************************/
         float fauNew = memManager->getPageFaultRate();
-    //    qDebug() <<"缺页率：" <<fauNew;
         fau_list << fauNew;
         // 数据个数超过了最大数量,删除首个，数据往前移，添加最后一个
         if (fau_list.size() > fauMaxSize) {
@@ -431,6 +440,9 @@ void MainWindow::timerEvent(QTimerEvent *event)
             fauScatterSeries->append(i, fau_list.at(i));
         }
     /*********************fault_rate chart数据更新**************************/
+        ui->le_allo->setText(QString::number(alloNew));
+        ui->le_free->setText(QString::number(alloMaxY-alloNew));
+        ui->le_mem_rate->setText(QString::number(mrNew));
     }
 
 }

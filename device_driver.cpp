@@ -19,7 +19,7 @@ void DeviceDriver::handleEvent(IOType _type)
     waitingQue.pop();
 
     qDebug() << "正在处理进程：" << runningPCB->getPId()<<"的事件";
-    QThread::sleep(5);
+    QThread::sleep(3);
     if(runningPCB->getIsPageFault())
     {
         handlePageFault();
@@ -102,11 +102,11 @@ void DeviceDriver::handleEvent(IOType _type)
 void DeviceDriver::handlePageFault()
 {
 
-//    qDebug() << "page_fault";
+    //qDebug() << "page_fault";
     int addr = runningPCB->getStartAddr();
     int pId = runningPCB->getPId();
 
-//    qDebug() << "addr" << addr;
+    //qDebug() << "addr" << addr;
     //find the page we need in the disk
     int blockNum = (mmgr->page_tables)[pId].findBlockNumber(addr);
 
@@ -140,7 +140,7 @@ void DeviceDriver::handlePageFault()
        // qDebug() << buff[0] << buff[1] << buff[2];
         mmgr->writeMemPage(wPage,buff);
 
-//        qDebug() << blockNum << " " << wPage;
+    //    qDebug() <<"进程" << runningPCB->getPId() << " "<< blockNum << " " << wPage;
 //        for(int i = 0; i < page_size; i ++)
 //        {
 //             qDebug() << buff[i];

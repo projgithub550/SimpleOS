@@ -25,6 +25,7 @@ enum Event
     normal,
     std_io,
     disk_io,
+    preempted
 };
 
 
@@ -34,6 +35,7 @@ enum Operation {
 };
 
 //cpu
+const int PREEMPTED = -3;
 const int BLOCK_IO = -2;   // 读写文件中断
 const int BLOCK_DISK = -1; // 缺页中断
 const int NEXT = 1;		   // 指令正常执行
@@ -64,7 +66,7 @@ enum IOType
 #define Valid 1
 
 #define page_size 64//页大小
-#define occupancy 8 //页表实际占用的页
+#define occupancy 3 //页表实际占用的页
 
 #define max_page_number 16 //虚拟页表最多含有的页
 #define maxa_page_number 1024 //理论上页表最多含有的页

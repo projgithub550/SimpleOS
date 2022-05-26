@@ -21,7 +21,10 @@ Page_table::Page_table()
 
 void Page_table::initializePage(string f_name)
 {
+   // qDebug() << "初始化页表-------------";
+    // qDebug() << "文件名-------------" << QString::fromStdString(f_name);
     os_file* os_f=File::Open_File(f_name);//先通过文件目录查找到文件的句柄
+    // qDebug() << "拿到句柄-------------";
     //将文件句柄对应的磁盘块号与分配的页号对应
     int* blocka = os_f->f_iNode->block_address;
 

@@ -175,7 +175,7 @@ void MemoryManager::FIFO(int pid,int& wPage,int& wBlock)//进程号，物理页�
             }
             else//如果没有空闲的物理页，寻找一页换出
             {
-                int index,index_b,p_page;
+                int index = 0;//,index_b,p_page;
                 for(map<int,vector<int> >::iterator k=this->page_tables[pid].table.begin();k!=this->page_tables[pid].table.end();k++)
                 {
                     if((k->second)[0] == this->page_tables[pid].schedule_queue[0])//找到调度队列第一个物理块对应的页表项
@@ -207,7 +207,7 @@ void MemoryManager::FIFO(int pid,int& wPage,int& wBlock)//进程号，物理页�
     }
     if(!isfull)
     {
-        int index,index_b,p_page;
+   //     int index,index_b,p_page;
         for(map<int,vector<int> >::iterator k=this->page_tables[pid].table.begin();k!=this->page_tables[pid].table.end();k++)
         {
             if((k->second)[0] == this->page_tables[pid].schedule_queue[0])//找到调度队列第一个物理块对应的页表项
@@ -259,6 +259,7 @@ void MemoryManager::LRU(int pid,int addr,int& wPage,int& wBlock)//进程号，�
 
           //qDebug() << "修改页表";
           //wPage存入页表中VP对应的物理页号中，VP有效位置1，将VP加入调度队列
+          temp_table.nValid++;
           temp_table.revisePage(page_number,wPage,1,temp_table.table[page_number][1]);
 
           //在调度队列末尾加入访问页号
@@ -285,7 +286,7 @@ void MemoryManager::LRU(int pid,int addr,int& wPage,int& wBlock)//进程号，�
     temp_table.revisePage(rPageNum,-3,0,temp_table.table[rPageNum][1]);
 
    //将wPage存入VP对应的物理页号中，VP有效位置1，将VP加入调度队列
-    temp_table.revisePage(rPageNum,wPage,1,temp_table.table[page_number][1]);
+    temp_table.revisePage(page_number,wPage,1,temp_table.table[page_number][1]);
     temp_table.schedule_queue.push_back(page_number);
 
     page_tables[pid] = temp_table;
@@ -318,12 +319,12 @@ int MemoryManager::readMem(int pid,int startAddr,int size,void* buff)
   //  qDebug() << "start_block:" << start_block;
    // qDebug() << "offset:" << offset;
     fseek(fp,start_block*page_size+offset, SEEK_SET);//指针应该移动到对应物理块加偏移量的位置
-    // qDebug() << "sssssssssssssssssssssssssss";
+  //   qDebug() << "sssssssssssssssssssssssssss";
 	if(fread(buff,size, 1, fp))//将物理内存的内容读出到缓冲区
     {
-        //char *b = (char*)buff;
-      //  qDebug() << "0是"<< ((char*)buff)[0] << "1是" << ((char*)buff)[1] <<"2是" <<((char*)buff)[2];
-      //  qDebug() << "aaaaaaaaaaaaaaaaaaaaaaaa";
+      //  char *b = (char*)buff;
+     //   qDebug() << "0是"<< ((char*)buff)[0] << "1是" << ((char*)buff)[1] <<"2是" <<((char*)buff)[2];
+     //   qDebug() << "aaaaaaaaaaaaaaaaaaaaaaaa";
         fclose(fp);
         return Valid;
     }
@@ -354,7 +355,7 @@ int MemoryManager::writeMem(int pid,int startAddr,int size,void* buff)
     this->updateScheQue(pid,page_number);
 
     FILE* fp;
-    fp = fopen("memory.bin", "wb");
+    fp = fopen("memory.bin", "ab+");
     rewind(fp);//把当前的读写位置回到内存的最开始开始
     fseek(fp,start_block*page_size+offest, SEEK_SET);//指针应该移动到对应物理块加偏移量的位置
     if(fwrite(buff, size, 1, fp))//将内容写入到内存
@@ -371,12 +372,30 @@ int MemoryManager::writeMem(int pid,int startAddr,int size,void* buff)
 
 void MemoryManager::updateScheQue(int pid,int pageNum)
 {
+
+
     vector<int> que = this->page_tables[pid].schedule_queue;
+
+    cout << "schedule queue before:";
+    for(int i = 0; i < (int)que.size(); i ++)
+    {
+        cout << que[i] << " ";
+    }
+    cout << endl;
+
+    cout << "page requested:" << pageNum << endl;
 
     vector<int>::iterator dt =  find(que.begin(),que.end(),pageNum);
     que.erase(dt);
     que.push_back(pageNum);
     this->page_tables[pid].schedule_queue = que;
+
+    cout << "schedule queue after:";
+    for(int i = 0; i < (int)que.size(); i ++)
+    {
+        cout << que[i] << " ";
+    }
+    cout << endl;
     return;
 }
 
@@ -401,13 +420,13 @@ int MemoryManager::readMemPage(int wPage,char *buff)
 int MemoryManager::writeMemPage(int wPage,char *buff)
 {
     FILE* fp;
-    physical_size_used+=page_size;
     cur_aid+=1;
-    fp = fopen("memory.bin", "wb");
+    fp = fopen("memory.bin", "ab+");
     rewind(fp);//把当前的读写位置回到内存的最开始开始
     fseek(fp,wPage*page_size, SEEK_SET);//指针应该移动到对应物理块加偏移量的位置
     if(fwrite(buff, page_size, 1, fp))//将内容写入到内存
     {
+   //     qDebug() << "写到了第" << wPage << "页中";
         fclose(fp);
         return Valid;
     }

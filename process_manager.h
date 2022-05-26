@@ -17,27 +17,39 @@
 
 using namespace std;
 
+
+
 class ProcessManager : public QObject
 {
     Q_OBJECT
     signals:
         void tellCPUExec();
+     //   void tellCPUPreempt();
         void tellIOExec(IOType _type);
 
+
     public slots:
+     //   void terminate(int pid);
         void run2dead();
         void run2blocked();
         void blocked2ready(PCB* pcb);
         void blocked2dead(PCB* pcb);
+        void forkProcess(PCB* pcb);
 
     private:
-        static bool cmp(PCB* a, PCB* b) { return a->getPriority() < b->getPriority(); }
+        struct cmp
+        {
+            bool operator()(PCB* pcb1,PCB* pcb2)
+            {
+                return pcb1->getPriority() < pcb2->getPriority();
+            }
+        };
 
         CPU* cpu;
         map<IOType,DeviceDriver*> drivers;
         MemoryManager* mmgr;
 
-        priority_queue<PCB*, vector<PCB*>, decltype(&cmp)> readyQue;
+        priority_queue<PCB*, vector<PCB*>, cmp> readyQue;
         PCB* runningPCB;					//运行中的PC
         vector<PCB*> allPCB;              //记录所有活着的PCB
 
@@ -46,6 +58,7 @@ class ProcessManager : public QObject
 
         void setDrivers(map<IOType,DeviceDriver*> drs);
         void createProcess(string workDir);
+
 
         void ready2run();
 

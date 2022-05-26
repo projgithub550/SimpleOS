@@ -137,7 +137,7 @@ class PCB
         }
         void setWorkDir(string work_dir)
         {
-            this->workDir = workDir;
+            this->workDir = work_dir;
         }
 
         vector<int> getFileIds()

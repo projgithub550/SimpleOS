@@ -3,6 +3,8 @@
 
 CPU::CPU(MemoryManager* m)
 {
+    this->nstate = NEXT;
+
     this->mmgr = m;
 }
 void CPU::setRunningPCB(PCB* pcb)
@@ -10,29 +12,41 @@ void CPU::setRunningPCB(PCB* pcb)
     this->runningPCB = pcb;
 }
 
+int CPU::moniterPreemption()
+{
+   return this->nstate;
+}
+
 void CPU::executePCB()
 {
+    this->nstate = NEXT;
+
     recoverContext();
 
     int NextState = NEXT;
 
-    qDebug() << "cpu is running";
-    int i = 1;
+  //  qDebug() << "cpu is running";
     while (NextState == NEXT)
     {
-        qDebug() << "进程"<<runningPCB->getPId()<<"正在取第"<<i<<"条指令";
+        qDebug() << "进程"<<runningPCB->getPId()<<"正在取第"<<(PC/6 + 1)<<"条指令";
         NextState = fetchInstruction();
         if (NextState == NEXT)
         {
             NextState = executeInstruction();
         }
-        i ++;
+
+        if(NextState == NEXT)
+        {
+            NextState = this->moniterPreemption();
+           // qDebug() << "-----------监测抢占";
+        }
+
 //        qDebug() << "执行完next_state为" << NextState;
     }
 
     if (NextState == END) // 正常结束
     {
-       // qDebug() << "cpu正常结束";
+ //       qDebug() << "进程"<<runningPCB->getPId()<<"cpu正常结束";
         runningPCB->setEvent(normal);
     }
     else if (NextState == BLOCK_DISK) // 缺页中断发生
@@ -43,6 +57,11 @@ void CPU::executePCB()
     else if (NextState == BLOCK_IO) // 文件读写中断
     {
         runningPCB->setEvent(disk_io);
+    }
+    else if(NextState == PREEMPTED)
+    {
+        runningPCB->setEvent(preempted);
+     //   qDebug() << "-----------被抢占了";
     }
 
     this->saveContext();
@@ -69,27 +88,20 @@ void CPU::saveContext()
 
 int CPU::fetchInstruction() // 每次返回一个16位指令
 {
-
-    QThread::sleep(3);
-//    qDebug() << PC;
+    QThread::sleep(1);
+ //   qDebug() << PC;
     char temp[6];
-    if(mmgr->readMem(runningPCB->getPId(), PC, 6, temp)==invalid_value)
+    if(mmgr->readMem(runningPCB->getPId(), PC, 5, temp)==invalid_value)
     {
-        qDebug() << "invalid";
+   //     qDebug() << "invalid";
         runningPCB->setStartAddr(PC);
         return BLOCK_DISK;
     }
 
-    char temp2[6];
-    int i;
-    for(i = 0; temp[i] != '\n' && temp[i] != '\0'; i ++)
-    {
-        temp2[i] =  temp[i];
-    }
-    temp2[i] = '\0';
-    this->IR = atoi(temp2);
+  //  qDebug() << temp[0] << temp[1] << temp[2] << temp[3];
+    this->IR = atoi(temp);
     qDebug() << "ir = " << IR;
-    PC += i + 1;
+    PC += 6;
 
     return NEXT;
 }
@@ -108,10 +120,7 @@ int CPU::executeInstruction()
     switch (OpCode)
     {
     case 0:
-        if (RegA == 0) // 终止指令
-            return END;
-        else
-            Reg[RegA] = getReg(RegB) + getReg(RegC);
+        Reg[RegA] = getReg(RegB) + getReg(RegC);
         break;
     case 1:
         Reg[RegA] = getReg(RegB) + ImmS;
@@ -123,21 +132,25 @@ int CPU::executeInstruction()
         Reg[RegA] = ImmU << 6;
         break;
     case 4:
-        if (mmgr->writeMem(runningPCB->getPId(), getReg(RegB) + ImmS, 2, (void *)&Reg[RegA]) == BLOCK)
+        char buff[6];
+        sprintf_s(buff,"%d",Reg[RegA]);
+        if (mmgr->writeMem(runningPCB->getPId(), getReg(RegB) + ImmS, 6, buff) == BLOCK)
         {
             runningPCB->setStartAddr(getReg(RegB) + ImmS);
-            PC -= 2;
+            PC -= 6;
             return BLOCK_DISK;
         }
         break;
     case 5:
     {   
-        if (mmgr->readMem(runningPCB->getPId(), getReg(RegB) + ImmS, 2, (void *)&Reg[RegA]) == BLOCK)
+        char buff[6];
+        if (mmgr->readMem(runningPCB->getPId(), getReg(RegB) + ImmS, 6, buff) == BLOCK)
         {
             runningPCB->setStartAddr(getReg(RegB) + ImmS);
-            PC -= 2;
+            PC -= 6;
             return BLOCK_DISK;
         }
+        Reg[RegA] = atoi(buff);
         break;
     }
     case 6:
@@ -145,7 +158,7 @@ int CPU::executeInstruction()
             PC += ImmS;
         break;
     case 7:
-        if ((getReg(RegA) == 0) && (getReg(RegB) == 0))
+        if ((RegA == 0) && (RegB == 0)&&(RegC == 0))
         {
             runningPCB->setOperation((Operation)getReg(7));
             runningPCB->setActiveFile(getReg(0));
@@ -154,6 +167,17 @@ int CPU::executeInstruction()
             runningPCB->pushFileIds(getReg(0));
             return BLOCK_IO;
         }
+        else if((RegA==0)&&(RegB==0)&&(RegC==1))
+        {
+            qDebug() << "准备fork";
+            saveContext();
+            emit tellManFork(this->runningPCB);
+            QThread::sleep(2);
+        }
+        else if ((RegA == 0) && (RegB == 0) && (RegC == 2))
+        {
+            return END;
+        }
         else
         {
             Reg[RegA] = PC;
@@ -161,6 +185,8 @@ int CPU::executeInstruction()
         }
         break;
     }
+
+
     return NEXT;
 }
 

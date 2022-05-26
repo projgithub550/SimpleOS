@@ -13,6 +13,8 @@ void ProcessManager::setDrivers(map<IOType,DeviceDriver*> ds)
     this->drivers = ds;
 }
 
+
+
 void ProcessManager::createProcess(string workDir)
 {
     //step 1: create a new PCB and initiate it
@@ -31,6 +33,7 @@ void ProcessManager::createProcess(string workDir)
     pcb->setTextStart(0);
 
     //get the program's size
+  //   qDebug() << "传入的文件名为:" << QString::fromStdString( pcb->getWorkDir());
     os_file* of =  File::Open_File(workDir);
 
     int fileSize = of->f_iNode->i_size;
@@ -47,30 +50,86 @@ void ProcessManager::createProcess(string workDir)
     }
 
     //step 3: put it into ready queue based on its priority
+    pcb->setStatus(ready);
     this->allPCB.push_back(pcb);
     readyQue.push(pcb);
 
-    pcb->setStatus(ready);
+
 
     //step 2: transform to running status when cpu is free
     qDebug() << "创建了一个进程加入到就绪队列，进程优先级为：" << pcb->getPriority();
     this->ready2run();
 }
 
+void ProcessManager::forkProcess(PCB* pcb)
+{
+    PCB* child = new PCB();
+    child->setPId(this->getAllPCB().size() + 11);//fork的进程号多加10
+    child->setEvent(normal);
+
+    //generate the priority randomly whose value is between 1 and 5
+    child->setPriority(rand()%5 + 1);
+
+    //file info
+    child->setWorkDir(pcb->getWorkDir());
+    child->setActiveFile(pcb->getActiveFile());
+
+    for(int i = 0; i < (int)pcb->getFileIds().size(); i ++)
+    {
+        child->pushFileIds((pcb->getFileIds())[i]);
+    }
+
+    //address space
+   // qDebug() << "创建页表-------------------";
+   // qDebug() << "传入的文件名为:" << QString::fromStdString( pcb->getWorkDir());
+     mmgr->createPageTable(child->getPId(),pcb->getWorkDir());
+     child->setTextStart(0);
+
+     //get the program's size
+    // qDebug() << "工作路径为：" <<QString::fromStdString( pcb->getWorkDir());
+     child->setTextEnd(pcb->getTextEnd());
+
+
+     child->setBase(page_size*maxa_page_number);
+     child->setTop(page_size*maxa_page_number);
+
+    //register
+    child->setPC(pcb->getPC());
+
+    for(int i = 0; i < REG_NUM; i ++)
+    {
+        child->setReg(i,pcb->getReg(i));
+    }
+    child->setStatus(ready);
+
+    this->allPCB.push_back(child);
+    readyQue.push(child);
+    qDebug() << "fork了一个进程加入到就绪队列，进程优先级为：" << child->getPriority();
+    ready2run();
+
+    return;
+}
+
 void ProcessManager::ready2run()
 {
-   // qDebug() << "ready to run";
-    // if there's a pcb running, return or try preemption
-    if (runningPCB != NULL) return;
+    //if there's no pcb waiting in the ready queue,return;
+    if(readyQue.size() == 0) return;
+
+    // if there's a pcb running, try preemption
+    if (runningPCB != NULL)
+    {
+        this->tryPreemp();
+        return;
+    }
+
 
     //step 1: pop out from ready queue
-    if(readyQue.size() == 0) return;
 
   //  qDebug() << "sssssssssssssssssssssssss";
     PCB* pcb = readyQue.top();
     readyQue.pop();
 
-  //  qDebug() << "aaaaaaaaaaaaaaaaaaaaaaaa";
+    qDebug() << "进程" << pcb->getPId() << "进入运行态";
     //step 2: pointer->pcb
     runningPCB = pcb;
     pcb->setStatus(running);
@@ -85,6 +144,7 @@ void ProcessManager::ready2run()
 
 void ProcessManager::run2blocked()
 {
+  //  qDebug() << "进程-------------------";
 
     // get current runningPCB
     PCB* pcb = runningPCB;
@@ -103,7 +163,11 @@ void ProcessManager::run2blocked()
             this->drivers[disk]->pushWaitingQue(pcb);
             emit tellIOExec(disk);
             break;
-    //case preempted:
+        case preempted:
+            qDebug() << "进程" << pcb->getPId()<< "被抢占，回到就绪队列";
+            pcb->setStatus(ready);
+            readyQue.push(pcb);
+            break;
         case normal:
             qDebug() << "error";
             this->run2dead();
@@ -169,15 +233,11 @@ void ProcessManager::blocked2dead(PCB* pcb)
 bool ProcessManager::tryPreemp() {
     PCB* pcb = readyQue.top();
     if (pcb->getPriority() > runningPCB->getPriority()) {
-        PCB* old = runningPCB;
-        runningPCB = nullptr;
 
-        // change to new runningPCB
-        ready2run();
+        //tell cpu to stop running
+        qDebug() << "进程" << pcb->getPId()<<"尝试抢占CPU";
+        this->cpu->setNState(PREEMPTED);
 
-        // old runningPCB back to readyQue
-        readyQue.push(old);
-        old->setStatus(ready);
 
         return true;
     }
